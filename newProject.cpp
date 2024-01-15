@@ -2,115 +2,15 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <algorithm>
 using namespace std;
 
-// Forward declarations
-class Member;
-class NonMember;
-class System;
-class Admin;
+#include "Member.h"
+#include "NonMember.h"
+#include "System.h"
+#include "Admin.h"
 
-// Class for individual members
-class Member {
-private:
-    string username;
-    string fullName;
-    string password;
-    string phoneNumber;
-    string email;
-    string homeAddress;
-    vector<string> skills;
-    int credit_points = 20;
-    float skillRating;
-    float supporterRating;
-    float hostRating;
-    vector<string> availability;
-    vector<Member*> blockedMembers;
-public:
-    // Constructor
-    Member(string username = "", string fullName = "", string password = "", string phoneNumber = "", string email = "", string homeAddress = "", vector<string> skills = {}, vector<string> availability = {});
-
-    // Getter methods
-    string getUsername();
-    string getFullName();
-    string getPassword();
-    string getPhoneNumber();
-    string getEmail();
-    string getHomeAddress();
-    float getSkillRating();
-    float getSupporterRating();
-    float getHostRating();
-    vector<string> getSkills();
-    vector<string> getAvailability();
-
-    //Setter methods
-    void setUsername(string newUsername);
-    void setFullName(string newFullName);
-    void setPassword(string newPassWord);
-    void setPhoneNumber(string newPhoneNumber);
-    void setEmail(string newEmail);
-    void setHomeAddress(string newHomeAddress);
-    void setSkillRating(float rating);
-    void setSupporterRating(float rating);
-    void setHostRating(float rating);
-    void setSkills(vector<string> newSkills);
-    void setAvailability(vector<string> newAvailability);
-
-    // Method to check if a member is available
-    bool isAvailable();
-
-    bool login(string inputUsername, string inputPassword);
-
-    void viewInformation();
-
-    //Credit points method
-    int getCreditPoints();
-    void setCreditPoints(int points);
-    void earnPoints(int points);
-    bool usePoints(int points);
-    void topUpPoints(int cash);
-
-    //Rating method
-    void rateSupporter(Member* supporter, float rating);
-    void rateHost(Member* host, float rating);
-};
-
-// Class for non-members
-class NonMember {
-private:
-    bool viewOnlyAccess;
-public:
-    void viewSupporters();
-    Member* registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability);
-};
-
-class System {
-private:
-    // Global list of members
-    static vector<Member*> members;
-public:
-    // Method to add a member
-    static void addMember(Member* member);
-
-    // Getter for members
-    static vector<Member*> getMembers();
-};
 vector<Member*> System::members;
-
-class Admin {
-private:
-    string username;
-    string password;
-public:
-    // Constructor
-    Admin(string username, string password);
-
-    // Method to check login
-    bool login(string username, string password);
-
-    // Method to reset a member's password
-    void resetMemberPassword(Member* member, string newPassword);
-};
 
 // Now define the methods
 Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability)
@@ -126,6 +26,9 @@ string Member::getEmail() { return email; }
 string Member::getHomeAddress() { return homeAddress; }
 vector<string> Member::getSkills() { return skills; }
 vector<string> Member::getAvailability() { return availability; }
+int Member::getPointsPerHour() { return pointsPerHour; }
+float Member::getMinHostRating() { return minHostRating; }
+bool Member::getRequestAccepted() { return requestAccepted; }
 
 void Member::setUsername(string newUsername)
 {
@@ -160,6 +63,16 @@ void Member::setSkills(vector<string> newSkills) {
 void Member::setAvailability(vector<string> newAvailability) {
     availability = newAvailability;
 }
+
+void Member::setPointsPerHour(int points) { 
+    pointsPerHour = points; 
+}
+
+void Member::setMinHostRating(float rating) { 
+    minHostRating = rating; 
+}
+
+void Member::setRequestAccepted(bool status) { requestAccepted = status; }
 
 bool Member::isAvailable() { return !availability.empty(); }
 
@@ -239,7 +152,13 @@ bool Member::usePoints(int points) {
 }
 
 // Method to top up points with cash
-void Member::topUpPoints(int cash) { credit_points += cash; }
+void Member::topUpPoints(int cash, string inputPassword) {
+    if (password == inputPassword) {
+        credit_points += cash;
+    } else {
+        cout << "Incorrect password. Cannot authorize transaction.\n";
+    }
+}
 
 // Getter and setter for ratings
 float Member::getSkillRating() { return skillRating; }
@@ -261,6 +180,67 @@ void Member::rateHost(Member* host, float rating) {
     host->setHostRating(rating);
 }
 
+// Method to list availability
+void Member::listAvailability(vector<string> newAvailability, int newPointsPerHour, float newMinHostRating) {
+    availability = newAvailability;
+    pointsPerHour = newPointsPerHour;
+    minHostRating = newMinHostRating;
+}
+
+// Method to unlist availability
+void Member::unlistAvailability() {
+    availability.clear();
+    pointsPerHour = 0;
+    minHostRating = 0;
+}
+
+// Method to book a supporter
+bool Member::bookSupporter(Member* supporter) {
+    if (credit_points >= supporter->getPointsPerHour() && hostRating >= supporter->getMinHostRating()) {
+        credit_points -= supporter->getPointsPerHour();
+        return true;  // Booking successful
+    } else {
+        return false;  // Not enough points or host rating too low
+    }
+}
+
+// Method to view all requests for their skills
+void Member::viewRequests(vector<Member*> requests) {
+    for (Member* request : requests) {
+        if (find(skills.begin(), skills.end(), request->getSkills()[0]) != skills.end()) {
+            cout << "Request from: " << request->getUsername() << "\n";
+            cout << "Host rating: " << request->getHostRating() << "\n";
+        }
+    }
+}
+
+// Method to accept or reject a request
+bool Member::respondToRequest(Member* request, bool accept) {
+    if (requestAccepted) {
+        cout << "Cannot cancel because the request is already accepted.\n";
+        return false;
+    } else {
+        if (accept) {
+            // Add code here to handle accepting the request
+            requestAccepted = true;
+            return true;
+        } else {
+            // Add code here to handle rejecting the request
+            return false;
+        }
+    }
+}
+
+// Method to block a member
+void Member::blockMember(Member* member) {
+    blockedMembers.push_back(member);
+}
+
+// Method to check if a member is blocked
+bool Member::isBlocked(Member* member) {
+    return std::find(blockedMembers.begin(), blockedMembers.end(), member) != blockedMembers.end();
+}
+
 Admin::Admin(string username, string password)
     : username(username), password(password) {}
 
@@ -270,6 +250,17 @@ bool Admin::login(string username, string password) {
 
 void Admin::resetMemberPassword(Member* member, string newPassword) {
     member->setPassword(newPassword);
+}
+
+// Method to search for all available suitable supporters for a specified city
+vector<Member*> System::searchSupporters(string city) {
+    vector<Member*> suitableSupporters;
+    for (Member* member : members) {
+        if (member->getHomeAddress() == city && member->isAvailable()) {
+            suitableSupporters.push_back(member);
+        }
+    }
+    return suitableSupporters;
 }
 
 int main() {
@@ -338,7 +329,7 @@ int main() {
     } else {
         cout << "Not enough points to book help.\n";
     }
-    testMember.topUpPoints(20);
+    testMember.topUpPoints(20, "testPass");
     cout << "After topping up 20 points with cash: " << testMember.getCreditPoints() << "\n";
 
     // Create two Member objects for testing
@@ -352,6 +343,53 @@ int main() {
     supporterMember.rateHost(&hostMember, 4.0);
     cout << "Host's host rating after being rated by supporter: " << hostMember.getHostRating() << "\n";
 
+    // Test the availability listing feature
+    testMember.listAvailability({"Wednesday", "Thursday"}, 5, 4.0);
+    cout << "\nAfter listing availability:\n";
+    cout << "> Availability: ";
+    for (const string& period : testMember.getAvailability()) {
+        cout << period << " ";
+    }
+    cout << "\n";
+    cout << "> Points per hour: " << testMember.getPointsPerHour() << "\n";
+    cout << "> Minimum host rating: " << testMember.getMinHostRating() << "\n";
+
+    testMember.unlistAvailability();
+    cout << "After unlisting availability:\n";
+    cout << "> Availability: ";
+    for (const string& period : testMember.getAvailability()) {
+        cout << period << " ";
+    }
+    cout << "\n";
+    cout << "> Points per hour: " << testMember.getPointsPerHour() << "\n";
+    cout << "> Minimum host rating: " << testMember.getMinHostRating() << "\n";
+
+     // Test the supporter booking feature
+    if (hostMember.bookSupporter(&supporterMember)) {
+        cout << "\nBooking successful!\n";
+    } else {
+        cout << "\nBooking failed.\n";
+    }
+
+    // Test the request management feature
+    vector<Member*> requests = {&hostMember};  // Replace with actual requests
+    supporterMember.viewRequests(requests);
+    if (supporterMember.respondToRequest(&hostMember, false)) {
+        cout << "\nRequest accepted.\n";
+    } else {
+        cout << "\nRequest rejected.\n";
+    }
+
+    // Create two Member objects for testing
+    Member member2("user2", "name2", "pass2", "0987654321", "email2", "456 St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"});
+
+    // Test the blocking feature
+    member1.blockMember(&member2);
+    if (member1.isBlocked(&member2)) {
+        cout << "Member2 is blocked by Member1.\n";
+    } else {
+        cout << "Member2 is not blocked by Member1.\n";
+    }
+
     return 0;
 }
-
