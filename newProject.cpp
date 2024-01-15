@@ -37,6 +37,9 @@ public:
     string getPhoneNumber();
     string getEmail();
     string getHomeAddress();
+    float getSkillRating();
+    float getSupporterRating();
+    float getHostRating();
     vector<string> getSkills();
     vector<string> getAvailability();
 
@@ -47,11 +50,29 @@ public:
     void setPhoneNumber(string newPhoneNumber);
     void setEmail(string newEmail);
     void setHomeAddress(string newHomeAddress);
+    void setSkillRating(float rating);
+    void setSupporterRating(float rating);
+    void setHostRating(float rating);
     void setSkills(vector<string> newSkills);
     void setAvailability(vector<string> newAvailability);
 
     // Method to check if a member is available
     bool isAvailable();
+
+    bool login(string inputUsername, string inputPassword);
+
+    void viewInformation();
+
+    //Credit points method
+    int getCreditPoints();
+    void setCreditPoints(int points);
+    void earnPoints(int points);
+    bool usePoints(int points);
+    void topUpPoints(int cash);
+
+    //Rating method
+    void rateSupporter(Member* supporter, float rating);
+    void rateHost(Member* host, float rating);
 };
 
 // Class for non-members
@@ -178,6 +199,68 @@ vector<Member*> System::getMembers() {
     return members;
 }
 
+bool Member::login(string inputUsername, string inputPassword) {
+    return username == inputUsername && password == inputPassword;
+}
+
+void Member::viewInformation() {
+    cout << "Username: " << username << "\n";
+    cout << "Full Name: " << fullName << "\n";
+    cout << "Phone Number: " << phoneNumber << "\n";
+    cout << "Email: " << email << "\n";
+    cout << "Home Address: " << homeAddress << "\n";
+    cout << "Skills: ";
+    for (const string& skill : skills) {
+        cout << skill << " ";
+    }
+    cout << "\n";
+    cout << "Availability: ";
+    for (const string& period : availability) {
+        cout << period << " ";
+    }
+    cout << "\n";
+}
+
+// Getter and setter for credit points
+int Member::getCreditPoints() { return credit_points; }
+void Member::setCreditPoints(int points) { credit_points = points; }
+
+// Method to earn points by helping others
+void Member::earnPoints(int points) { credit_points += points; }
+
+// Method to use points to book help from other members
+bool Member::usePoints(int points) {
+    if (credit_points >= points) {
+        credit_points -= points;
+        return true;  // Booking successful
+    } else {
+        return false;  // Not enough points
+    }
+}
+
+// Method to top up points with cash
+void Member::topUpPoints(int cash) { credit_points += cash; }
+
+// Getter and setter for ratings
+float Member::getSkillRating() { return skillRating; }
+void Member::setSkillRating(float rating) { skillRating = rating; }
+
+float Member::getSupporterRating() { return supporterRating; }
+void Member::setSupporterRating(float rating) { supporterRating = rating; }
+
+float Member::getHostRating() { return hostRating; }
+void Member::setHostRating(float rating) { hostRating = rating; }
+
+// Method for a member (as a host) to rate their supporter
+void Member::rateSupporter(Member* supporter, float rating) {
+    supporter->setSkillRating(rating);
+}
+
+// Method for a member (as a supporter) to rate their host
+void Member::rateHost(Member* host, float rating) {
+    host->setHostRating(rating);
+}
+
 Admin::Admin(string username, string password)
     : username(username), password(password) {}
 
@@ -234,6 +317,40 @@ int main() {
     cout << "After password change:\n";
     cout << "> Username: " << member1.getUsername() << "\n";
     cout << "> Password: " << member1.getPassword() << "\n\n";
+
+    // Create a Member object for testing
+    Member testMember("testUser", "testName", "testPass", "1234567890", "test@email.com", "123 Test St", {"cooking", "cleaning"}, {"Monday", "Tuesday"});
+
+    // Test the login feature
+    if (testMember.login("testUser", "testPass")) {
+        cout << "Login successful!\n";
+        testMember.viewInformation();
+    } else {
+        cout << "Login failed.\n";
+    }
+
+    // Test the credit points system
+    cout << "\nInitial credit points: " << testMember.getCreditPoints() << "\n";
+    testMember.earnPoints(10);
+    cout << "After earning 10 points: " << testMember.getCreditPoints() << "\n";
+    if (testMember.usePoints(15)) {
+        cout << "After using 15 points: " << testMember.getCreditPoints() << "\n";
+    } else {
+        cout << "Not enough points to book help.\n";
+    }
+    testMember.topUpPoints(20);
+    cout << "After topping up 20 points with cash: " << testMember.getCreditPoints() << "\n";
+
+    // Create two Member objects for testing
+    Member hostMember("hostUser", "hostName", "hostPass", "1234567890", "host@email.com", "123 Host St", {"cooking", "cleaning"}, {"Monday", "Tuesday"});
+    Member supporterMember("supporterUser", "supporterName", "supporterPass", "0987654321", "supporter@email.com", "123 Supporter St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"});
+
+    // Test the rating system
+    hostMember.rateSupporter(&supporterMember, 4.5);
+    cout << "\nSupporter's skill rating after being rated by host: " << supporterMember.getSkillRating() << "\n";
+
+    supporterMember.rateHost(&hostMember, 4.0);
+    cout << "Host's host rating after being rated by supporter: " << hostMember.getHostRating() << "\n";
 
     return 0;
 }
