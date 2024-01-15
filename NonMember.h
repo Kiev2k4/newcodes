@@ -11,7 +11,7 @@ class NonMember {
     bool viewOnlyAccess;
 public:
     void viewSupporters();
-    Member* registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability);
+    Member* registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city);
 };
 
 #endif  // NONMEMBER_H

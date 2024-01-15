@@ -1,0 +1,6 @@
+username1|full name1|newPassword|phone number1|email1|home address1|Sai Gon
+username4|full name4|password4|phone number4|email4|home address4|Sai Gon
+testUser|testName|testPass|1234567890|test@email.com|123 Test St|Sai Gon
+hostUser|hostName|hostPass|1234567890|host@email.com|123 Host St|Sai Gon
+supporterUser|supporterName|supporterPass|0987654321|supporter@email.com|123 Supporter St|Sai Gon
+user2|name2|pass2|0987654321|email2|456 St|Sai Gon

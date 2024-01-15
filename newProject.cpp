@@ -13,8 +13,8 @@ using namespace std;
 vector<Member*> System::members;
 
 // Now define the methods
-Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability)
-    : username(username), fullName(fullName), password(password), phoneNumber(phoneNumber), email(email), homeAddress(homeAddress), skills(skills), availability(availability) {
+Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city)
+    : username(username), fullName(fullName), password(password), phoneNumber(phoneNumber), email(email), homeAddress(homeAddress), skills(skills), availability(availability), city(city) {
     System::addMember(this);
 }
 
@@ -29,6 +29,7 @@ vector<string> Member::getAvailability() { return availability; }
 int Member::getPointsPerHour() { return pointsPerHour; }
 float Member::getMinHostRating() { return minHostRating; }
 bool Member::getRequestAccepted() { return requestAccepted; }
+string Member::getCity(){ return city; }
 
 void Member::setUsername(string newUsername)
 {
@@ -74,6 +75,10 @@ void Member::setMinHostRating(float rating) {
 
 void Member::setRequestAccepted(bool status) { requestAccepted = status; }
 
+void Member::setCity(string newCity) {
+    city = newCity;
+}
+
 bool Member::isAvailable() { return !availability.empty(); }
 
 void NonMember::viewSupporters() {
@@ -94,14 +99,20 @@ void NonMember::viewSupporters() {
             for (const string& period : member->getAvailability()) {
                 cout << period << " ";
             }
-            cout << "\n\n";
+            cout << "\n";
+            cout << "> City: " << member->getCity() << "\n\n";
         }
     }
 }
 
-Member* NonMember::registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability) {
-    Member* new_member = new Member(username, fullName, password, phoneNumber, email, homeAddress, skills, availability);
-    return new_member;
+Member* NonMember::registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city) {
+    if (city == "Ha Noi" || city == "Sai Gon") {
+        Member* new_member = new Member(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
+        return new_member;
+    } else {
+        cout << "Registration failed. The application is only available to users in Ha Noi and Sai Gon.\n";
+        return nullptr;
+    }
 }
 
 void System::addMember(Member* member) {
@@ -132,6 +143,7 @@ void Member::viewInformation() {
         cout << period << " ";
     }
     cout << "\n";
+    cout << "City: " << city << "\n";
 }
 
 // Getter and setter for credit points
@@ -256,19 +268,64 @@ void Admin::resetMemberPassword(Member* member, string newPassword) {
 vector<Member*> System::searchSupporters(string city) {
     vector<Member*> suitableSupporters;
     for (Member* member : members) {
-        if (member->getHomeAddress() == city && member->isAvailable()) {
+        if (member->getCity() == city && member->isAvailable()) {
             suitableSupporters.push_back(member);
         }
     }
     return suitableSupporters;
 }
 
+void System::saveData() {
+    ofstream outFile("data.txt");
+    if (!outFile) {
+        cout << "Error: Could not open file for writing.\n";
+        return;
+    }
+    for (Member* member : members) {
+        outFile << member->getUsername() << "|"
+                << member->getFullName() << "|"
+                << member->getPassword() << "|"
+                << member->getPhoneNumber() << "|"
+                << member->getEmail() << "|"
+                << member->getHomeAddress() << "|"
+                << member->getCity() << "\n";
+        // Add other attributes as needed
+    }
+    outFile.close();
+}
+
+void System::loadData() {
+    ifstream inFile("data.txt");
+    if (!inFile) {
+        cout << "Error: Could not open file for reading.\n";
+        return;
+    }
+    string line;
+    while (getline(inFile, line)) {
+        stringstream ss(line);
+        string username, fullName, password, phoneNumber, email, homeAddress, city;
+        getline(ss, username, '|');
+        getline(ss, fullName, '|');
+        getline(ss, password, '|');
+        getline(ss, phoneNumber, '|');
+        getline(ss, email, '|');
+        getline(ss, homeAddress, '|');
+        getline(ss, city, '|');
+        // Create a new Member object with the data
+        new Member(username, fullName, password, phoneNumber, email, homeAddress, {}, {}, city);
+    }
+    inFile.close();
+}
+
 int main() {
     System system;
 
+    // Load data from file when the program starts
+    system.loadData();
+
     // Create some Member objects and add them to the vector
     vector<string> availability1 = {"Monday morning", "Tuesday afternoon"};
-    Member member1("username1", "full name1", "password1", "phone number1", "email1", "home address1", {"cleaning", "reading"}, availability1);
+    Member member1("username1", "full name1", "password1", "phone number1", "email1", "home address1", {"cleaning", "reading"}, availability1, "Sai Gon");
 
     // Create a NonMember instance
     NonMember non_member;
@@ -279,7 +336,7 @@ int main() {
 
     // Non-member registers to become a member
     cout << "Non-member registers to become a member:";
-    Member* new_member = non_member.registerMember("username4", "full name4", "password4", "phone number4", "email4", "home address4", {}, {});
+    Member* new_member = non_member.registerMember("username4", "full name4", "password4", "phone number4", "email4", "home address4", {}, {}, "Sai Gon");
 
     // Print the new member's details
     cout << "\nNew member's details:\n";
@@ -310,7 +367,7 @@ int main() {
     cout << "> Password: " << member1.getPassword() << "\n\n";
 
     // Create a Member object for testing
-    Member testMember("testUser", "testName", "testPass", "1234567890", "test@email.com", "123 Test St", {"cooking", "cleaning"}, {"Monday", "Tuesday"});
+    Member testMember("testUser", "testName", "testPass", "1234567890", "test@email.com", "123 Test St", {"cooking", "cleaning"}, {"Monday", "Tuesday"}, "Sai Gon");
 
     // Test the login feature
     if (testMember.login("testUser", "testPass")) {
@@ -333,8 +390,8 @@ int main() {
     cout << "After topping up 20 points with cash: " << testMember.getCreditPoints() << "\n";
 
     // Create two Member objects for testing
-    Member hostMember("hostUser", "hostName", "hostPass", "1234567890", "host@email.com", "123 Host St", {"cooking", "cleaning"}, {"Monday", "Tuesday"});
-    Member supporterMember("supporterUser", "supporterName", "supporterPass", "0987654321", "supporter@email.com", "123 Supporter St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"});
+    Member hostMember("hostUser", "hostName", "hostPass", "1234567890", "host@email.com", "123 Host St", {"cooking", "cleaning"}, {"Monday", "Tuesday"}, "Sai Gon");
+    Member supporterMember("supporterUser", "supporterName", "supporterPass", "0987654321", "supporter@email.com", "123 Supporter St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"}, "Sai Gon");
 
     // Test the rating system
     hostMember.rateSupporter(&supporterMember, 4.5);
@@ -381,7 +438,7 @@ int main() {
     }
 
     // Create two Member objects for testing
-    Member member2("user2", "name2", "pass2", "0987654321", "email2", "456 St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"});
+    Member member2("user2", "name2", "pass2", "0987654321", "email2", "456 St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"}, "Sai Gon");
 
     // Test the blocking feature
     member1.blockMember(&member2);
@@ -390,6 +447,9 @@ int main() {
     } else {
         cout << "Member2 is not blocked by Member1.\n";
     }
+
+    // Save data to file before the program ends
+    system.saveData();
 
     return 0;
 }

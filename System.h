@@ -18,6 +18,12 @@ public:
     
     //Method to search for supporters
     vector<Member*> searchSupporters(string city);
+
+    //Load data method
+    void loadData();
+
+    //Save data method
+    void saveData();
 };
 
 #endif  // SYSTEM_H

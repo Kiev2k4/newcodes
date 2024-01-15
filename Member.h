@@ -26,9 +26,10 @@ private:
     int pointsPerHour;
     float minHostRating;
     bool requestAccepted = false;
+    string city;
 public:
     // Constructor
-    Member(string username = "", string fullName = "", string password = "", string phoneNumber = "", string email = "", string homeAddress = "", vector<string> skills = {}, vector<string> availability = {});
+    Member(string username = "", string fullName = "", string password = "", string phoneNumber = "", string email = "", string homeAddress = "", vector<string> skills = {}, vector<string> availability = {}, string city = "");
 
     // Getter methods
     string getUsername();
@@ -45,6 +46,7 @@ public:
     int getPointsPerHour();
     float getMinHostRating();
     bool getRequestAccepted();
+    string getCity();
 
     //Setter methods
     void setUsername(string newUsername);
@@ -61,6 +63,7 @@ public:
     void setPointsPerHour(int points);
     void setMinHostRating(float rating);
     void setRequestAccepted(bool status);
+    void setCity(string newCity);
 
     // Method to check if a member is available
     bool isAvailable();
