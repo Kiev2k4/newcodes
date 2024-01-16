@@ -125,6 +125,15 @@ vector<Member*> System::getMembers() {
     return members;
 }
 
+Member* System::findMemberByUsername(string username) {
+    for (Member* member : members) {
+        if (member->getUsername() == username) {
+            return member;
+        }
+    }
+    return nullptr;  // Return nullptr if no member with the given username is found
+}
+
 bool Member::login(string inputUsername, string inputPassword) {
     return username == inputUsername && password == inputPassword;
 }
@@ -264,6 +273,7 @@ bool Admin::login(string username, string password) {
 
 void Admin::resetMemberPassword(Member* member, string newPassword) {
     member->setPassword(newPassword);
+    System::saveData();
 }
 
 // Method to search for all available suitable supporters for a specified city
@@ -275,6 +285,18 @@ vector<Member*> System::searchSupporters(string city) {
         }
     }
     return suitableSupporters;
+}
+
+pair<string, string> System::loadAdminData() {
+    ifstream inFile("adminData.txt");
+    if (!inFile) {
+        cout << "Error: Could not open file for reading.\n";
+        return {"", ""};
+    }
+    string username, password;
+    inFile >> username >> password;
+    inFile.close();
+    return {username, password};
 }
 
 void System::saveData() {
@@ -311,6 +333,7 @@ void System::loadData() {
         return;
     }
     string line;
+    getline(inFile, line);// Skip the first line
     while (getline(inFile, line)) {
         stringstream ss(line);
         string username, fullName, password, phoneNumber, email, homeAddress, city, skills, availability;
@@ -347,6 +370,10 @@ int main() {
     // Load data from file when the program starts
     system.loadData();
 
+    // Load admin data
+    pair<string, string> adminData = system.loadAdminData();
+    Admin admin(adminData.first, adminData.second);
+
     cout << "EEET2482/COSC2082 ASSIGNMENT\n";
     cout << "\"TIME BANK\" APPLICATION\n";
     cout << "Instructor: Mr. Tran Duc Linh\n";
@@ -355,10 +382,17 @@ int main() {
     cout << "sXXXXXXX, Student Name\n";
     cout << "sXXXXXXX, Student Name\n";
     cout << "sXXXXXXX, Student Name\n";
-    cout << "Use the app as 1. Guest 2. Member 3. Admin\n";
 
     int choice;
-    cin >> choice;
+    do {
+        cout << "Use the app as 1. Guest 2. Member 3. Admin\n";
+        cin >> choice;
+        if (cin.fail()) {
+            cin.clear();  // Clear the fail state
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Ignore the rest of the line
+            choice = 0;  // Set choice to an invalid value so the loop continues
+        }
+    } while (choice < 1 || choice > 3);
 
     string username;
     switch (choice) {
@@ -413,7 +447,42 @@ int main() {
                 }
             } while (guestChoice != 0);
             break;
+        case 3:  // Admin
+            string adminUsername, adminPassword;
+            do {
+                cout << "Enter admin username: ";
+                cin.ignore();
+                getline(cin, adminUsername);
+                cout << "Enter admin password: ";
+                cin >> adminPassword;
+            } while (!admin.login(adminUsername, adminPassword));
+            cout << "Login successful! Welcome, admin!\n";
 
+            int adminChoice;
+            do {
+                cout << "\nThis is your menu:\n";
+                cout << "0. Exit\n";
+                cout << "1. Reset member password\n";
+                cout << "Enter your choice: ";
+                cin >> adminChoice;
+                switch (adminChoice) {
+                    case 1:  // Reset member password
+                        cout << "Enter the username of the member whose password you want to reset: ";
+                        cin >> username;
+                        Member* member = system.findMemberByUsername(username);  // You'll need to implement this method
+                        if (member != nullptr) {
+                            cout << "Enter the new password: ";
+                            string newPassword;
+                            cin >> newPassword;
+                            admin.resetMemberPassword(member, newPassword);
+                            cout << "Password reset successful!\n";
+                        } else {
+                            cout << "Member not found.\n";
+                        }
+                        break;
+                }
+            } while (adminChoice != 0);
+            break;
     // Save data to file before the program ends
     system.saveData();
 

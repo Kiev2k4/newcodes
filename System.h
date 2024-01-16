@@ -12,8 +12,13 @@ public:
     // Method to add a member
     static void addMember(Member* member);
 
+    //Method to find a member
+    Member* findMemberByUsername(string username);
+
     // Getter for members
     static vector<Member*> getMembers();
+
+    pair<string, string> loadAdminData();
     
     //Method to search for supporters
     vector<Member*> searchSupporters(string city);
