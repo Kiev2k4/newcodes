@@ -14,7 +14,6 @@ public:
 
     // Getter for members
     static vector<Member*> getMembers();
-
     
     //Method to search for supporters
     vector<Member*> searchSupporters(string city);
@@ -23,7 +22,7 @@ public:
     void loadData();
 
     //Save data method
-    void saveData();
+    static void saveData();
 };
 
 #endif  // SYSTEM_H

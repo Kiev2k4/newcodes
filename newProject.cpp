@@ -15,7 +15,6 @@ vector<Member*> System::members;
 // Now define the methods
 Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city)
     : username(username), fullName(fullName), password(password), phoneNumber(phoneNumber), email(email), homeAddress(homeAddress), skills(skills), availability(availability), city(city) {
-    System::addMember(this);
 }
 
 string Member::getUsername() { return username; }
@@ -107,8 +106,10 @@ void NonMember::viewSupporters() {
 
 Member* NonMember::registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city) {
     if (city == "Ha Noi" || city == "Sai Gon") {
-        Member* new_member = new Member(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
-        return new_member;
+        Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
+        System::addMember(newMember);  // Add the new member to the system
+        System::saveData();
+        return newMember;
     } else {
         cout << "Registration failed. The application is only available to users in Ha Noi and Sai Gon.\n";
         return nullptr;
@@ -276,7 +277,7 @@ vector<Member*> System::searchSupporters(string city) {
 }
 
 void System::saveData() {
-    ofstream outFile("data.txt");
+    ofstream outFile("data.txt", ios::trunc);
     if (!outFile) {
         cout << "Error: Could not open file for writing.\n";
         return;
@@ -295,6 +296,7 @@ void System::saveData() {
 }
 
 void System::loadData() {
+    members.clear();
     ifstream inFile("data.txt");
     if (!inFile) {
         cout << "Error: Could not open file for reading.\n";
@@ -312,7 +314,8 @@ void System::loadData() {
         getline(ss, homeAddress, '|');
         getline(ss, city, '|');
         // Create a new Member object with the data
-        new Member(username, fullName, password, phoneNumber, email, homeAddress, {}, {}, city);
+        Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, {}, {}, city);
+        members.push_back(newMember);
     }
     inFile.close();
 }
@@ -323,133 +326,68 @@ int main() {
     // Load data from file when the program starts
     system.loadData();
 
-    // Create some Member objects and add them to the vector
-    vector<string> availability1 = {"Monday morning", "Tuesday afternoon"};
-    Member member1("username1", "full name1", "password1", "phone number1", "email1", "home address1", {"cleaning", "reading"}, availability1, "Sai Gon");
+    cout << "EEET2482/COSC2082 ASSIGNMENT\n";
+    cout << "\"TIME BANK\" APPLICATION\n";
+    cout << "Instructor: Mr. Tran Duc Linh\n";
+    cout << "Group: Group No.\n";
+    cout << "sXXXXXXX, Student Name\n";
+    cout << "sXXXXXXX, Student Name\n";
+    cout << "sXXXXXXX, Student Name\n";
+    cout << "sXXXXXXX, Student Name\n";
+    cout << "Use the app as 1. Guest 2. Member 3. Admin\n";
 
-    // Create a NonMember instance
-    NonMember non_member;
+    int choice;
+    cin >> choice;
 
-    // Non-member views all supporters' details
-    cout << "Non-member views all supporters' details:\n";
-    non_member.viewSupporters();
+    string username;
+    switch (choice) {
+        case 1:  // Guest
+            NonMember guest;
+            int guestChoice;
+            do {
+                cout << "This is your menu:\n";
+                cout << "0. Exit\n";
+                cout << "1. View Supporters\n";
+                cout << "2. Register as Member\n";
+                cout << "Enter your choice: ";
+                cin >> guestChoice;
 
-    // Non-member registers to become a member
-    cout << "Non-member registers to become a member:";
-    Member* new_member = non_member.registerMember("username4", "full name4", "password4", "phone number4", "email4", "home address4", {}, {}, "Sai Gon");
-
-    // Print the new member's details
-    cout << "\nNew member's details:\n";
-    cout << "> Username: " << new_member->getUsername() << "\n";
-    cout << "> Full name: " << new_member->getFullName() << "\n\n";
-    // Print other details...
-
-    // Non-member views all supporters' details again
-    cout << "Non-member views all supporters' details again:\n";
-    non_member.viewSupporters();
-
-    // Create an Admin object
-    Admin admin("adminUsername", "adminPassword");
-
-    // Print the member's username and password before the change
-    cout << "Before password change:\n";
-    cout << "> Username: " << member1.getUsername() << "\n";
-    cout << "> Password: " << member1.getPassword() << "\n\n";
-
-    // Admin logs in and changes the member's password
-    if (admin.login("adminUsername", "adminPassword")) {
-        admin.resetMemberPassword(&member1, "newPassword");
-    }
-
-    // Print the member's username and password after the change
-    cout << "After password change:\n";
-    cout << "> Username: " << member1.getUsername() << "\n";
-    cout << "> Password: " << member1.getPassword() << "\n\n";
-
-    // Create a Member object for testing
-    Member testMember("testUser", "testName", "testPass", "1234567890", "test@email.com", "123 Test St", {"cooking", "cleaning"}, {"Monday", "Tuesday"}, "Sai Gon");
-
-    // Test the login feature
-    if (testMember.login("testUser", "testPass")) {
-        cout << "Login successful!\n";
-        testMember.viewInformation();
-    } else {
-        cout << "Login failed.\n";
-    }
-
-    // Test the credit points system
-    cout << "\nInitial credit points: " << testMember.getCreditPoints() << "\n";
-    testMember.earnPoints(10);
-    cout << "After earning 10 points: " << testMember.getCreditPoints() << "\n";
-    if (testMember.usePoints(15)) {
-        cout << "After using 15 points: " << testMember.getCreditPoints() << "\n";
-    } else {
-        cout << "Not enough points to book help.\n";
-    }
-    testMember.topUpPoints(20, "testPass");
-    cout << "After topping up 20 points with cash: " << testMember.getCreditPoints() << "\n";
-
-    // Create two Member objects for testing
-    Member hostMember("hostUser", "hostName", "hostPass", "1234567890", "host@email.com", "123 Host St", {"cooking", "cleaning"}, {"Monday", "Tuesday"}, "Sai Gon");
-    Member supporterMember("supporterUser", "supporterName", "supporterPass", "0987654321", "supporter@email.com", "123 Supporter St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"}, "Sai Gon");
-
-    // Test the rating system
-    hostMember.rateSupporter(&supporterMember, 4.5);
-    cout << "\nSupporter's skill rating after being rated by host: " << supporterMember.getSkillRating() << "\n";
-
-    supporterMember.rateHost(&hostMember, 4.0);
-    cout << "Host's host rating after being rated by supporter: " << hostMember.getHostRating() << "\n";
-
-    // Test the availability listing feature
-    testMember.listAvailability({"Wednesday", "Thursday"}, 5, 4.0);
-    cout << "\nAfter listing availability:\n";
-    cout << "> Availability: ";
-    for (const string& period : testMember.getAvailability()) {
-        cout << period << " ";
-    }
-    cout << "\n";
-    cout << "> Points per hour: " << testMember.getPointsPerHour() << "\n";
-    cout << "> Minimum host rating: " << testMember.getMinHostRating() << "\n";
-
-    testMember.unlistAvailability();
-    cout << "After unlisting availability:\n";
-    cout << "> Availability: ";
-    for (const string& period : testMember.getAvailability()) {
-        cout << period << " ";
-    }
-    cout << "\n";
-    cout << "> Points per hour: " << testMember.getPointsPerHour() << "\n";
-    cout << "> Minimum host rating: " << testMember.getMinHostRating() << "\n";
-
-     // Test the supporter booking feature
-    if (hostMember.bookSupporter(&supporterMember)) {
-        cout << "\nBooking successful!\n";
-    } else {
-        cout << "\nBooking failed.\n";
-    }
-
-    // Test the request management feature
-    vector<Member*> requests = {&hostMember};  // Replace with actual requests
-    supporterMember.viewRequests(requests);
-    if (supporterMember.respondToRequest(&hostMember, false)) {
-        cout << "\nRequest accepted.\n";
-    } else {
-        cout << "\nRequest rejected.\n";
-    }
-
-    // Create two Member objects for testing
-    Member member2("user2", "name2", "pass2", "0987654321", "email2", "456 St", {"cleaning", "gardening"}, {"Wednesday", "Thursday"}, "Sai Gon");
-
-    // Test the blocking feature
-    member1.blockMember(&member2);
-    if (member1.isBlocked(&member2)) {
-        cout << "Member2 is blocked by Member1.\n";
-    } else {
-        cout << "Member2 is not blocked by Member1.\n";
-    }
+                switch (guestChoice) {
+                    case 1:  // View Supporters
+                        guest.viewSupporters();
+                        break;
+                    case 2:  // Register as Member
+                        string username, fullName, password, phoneNumber, email, homeAddress, city;
+                        vector<string> skills, availability;
+                        // Add code here to get the necessary information from the user
+                        cout << "Enter username: ";
+                        cin.ignore();
+                        getline(cin, username);
+                        cout << "Enter full name: ";
+                        getline(cin, fullName);
+                        cout << "Enter password: ";
+                        getline(cin, password);
+                        cout << "Enter phone number: ";
+                        getline(cin, phoneNumber);
+                        cout << "Enter email: ";
+                        getline(cin, email);
+                        cout << "Enter home address: ";
+                        getline(cin, homeAddress);
+                        cout << "Enter city (Ha Noi or Sai Gon): ";
+                        getline(cin, city);
+                        // Add code here to get skills and availability from the user
+                        Member* newMember = guest.registerMember(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
+                        if (newMember != nullptr) {
+                            cout << "> Registration successful! Welcome, " << newMember->getFullName() << "!\n\n";
+                        }
+                        break;
+                }
+            } while (guestChoice != 0);
+            break;
 
     // Save data to file before the program ends
     system.saveData();
 
     return 0;
+    }
 }
