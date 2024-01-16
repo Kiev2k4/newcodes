@@ -1,10 +1,10 @@
-username1|full name1|newPassword|phone number1|email1|home address1|Sai Gon
-username4|full name4|password4|phone number4|email4|home address4|Sai Gon
-testUser|testName|testPass|1234567890|test@email.com|123 Test St|Sai Gon
-hostUser|hostName|hostPass|1234567890|host@email.com|123 Host St|Sai Gon
-supporterUser|supporterName|supporterPass|0987654321|supporter@email.com|123 Supporter St|Sai Gon
-user2|name2|pass2|0987654321|email2|456 St|Sai Gon
-hau|hau nguyen|12|123|hau@|123 qt|Sai Gon
-nguyen|nguyen le|123|12345|nguyen@|123 qt|Ha Noi
-huy|huy nguyen|123|12345|huy@|123 qt|Ha Noi
-hau|hau nguyen|123|123456|hau@gmail.com|123 qt|Ha Noi
+username1|full name1|newPassword|phone number1|email1|home address1|Sai Gon||
+username4|full name4|password4|phone number4|email4|home address4|Sai Gon||
+testUser|testName|testPass|1234567890|test@email.com|123 Test St|Sai Gon||
+hostUser|hostName|hostPass|1234567890|host@email.com|123 Host St|Sai Gon||
+supporterUser|supporterName|supporterPass|0987654321|supporter@email.com|123 Supporter St|Sai Gon||
+user2|name2|pass2|0987654321|email2|456 St|Sai Gon||
+nguyen|nguyen le|123|12345|nguyen@|123 qt|Ha Noi||
+huy|huy nguyen|123|12345|huy@|123 qt|Ha Noi||
+hau|hau nguyen|123|123456|hau@gmail.com|123 qt|Ha Noi||
+dai|dai vu phat|1234|09192837|phat@gmail.com|123 quang trung|Ha Noi|cleaning cooking |Monday 17:00 

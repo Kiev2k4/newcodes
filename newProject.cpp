@@ -11,6 +11,7 @@ using namespace std;
 #include "Admin.h"
 
 vector<Member*> System::members;
+vector<string> split(const string& s, char delimiter);  // Function declaration
 
 // Now define the methods
 Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city)
@@ -289,8 +290,15 @@ void System::saveData() {
                 << member->getPhoneNumber() << "|"
                 << member->getEmail() << "|"
                 << member->getHomeAddress() << "|"
-                << member->getCity() << "\n";
-        // Add other attributes as needed
+                << member->getCity() << "|";
+        for (const string& skill : member->getSkills()) {
+            outFile << skill << " ";
+        }
+        outFile << "|";
+        for (const string& period : member->getAvailability()) {
+            outFile << period << " ";
+        }
+        outFile << "\n";
     }
     outFile.close();
 }
@@ -305,7 +313,7 @@ void System::loadData() {
     string line;
     while (getline(inFile, line)) {
         stringstream ss(line);
-        string username, fullName, password, phoneNumber, email, homeAddress, city;
+        string username, fullName, password, phoneNumber, email, homeAddress, city, skills, availability;
         getline(ss, username, '|');
         getline(ss, fullName, '|');
         getline(ss, password, '|');
@@ -313,11 +321,24 @@ void System::loadData() {
         getline(ss, email, '|');
         getline(ss, homeAddress, '|');
         getline(ss, city, '|');
-        // Create a new Member object with the data
-        Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, {}, {}, city);
+        getline(ss, skills, '|');
+        getline(ss, availability, '|');
+        vector<string> skillVector = split(skills, ' ');
+        vector<string> availabilityVector = split(availability, ' ');
+        Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skillVector, availabilityVector, city);
         members.push_back(newMember);
     }
     inFile.close();
+}
+
+vector<string> split(const string& s, char delimiter) {
+    vector<string> tokens;
+    string token;
+    istringstream tokenStream(s);
+    while (getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
 }
 
 int main() {
@@ -345,7 +366,7 @@ int main() {
             NonMember guest;
             int guestChoice;
             do {
-                cout << "This is your menu:\n";
+                cout << "\nThis is your menu:\n";
                 cout << "0. Exit\n";
                 cout << "1. View Supporters\n";
                 cout << "2. Register as Member\n";
@@ -367,14 +388,22 @@ int main() {
                         getline(cin, fullName);
                         cout << "Enter password: ";
                         getline(cin, password);
-                        cout << "Enter phone number: ";
-                        getline(cin, phoneNumber);
+                        do {
+                            cout << "Enter phone number: ";
+                            cin >> phoneNumber;
+                            cin.ignore(numeric_limits<streamsize>::max(), '\n');  // Ignore the newline character
+                        } while (!all_of(phoneNumber.begin(), phoneNumber.end(), ::isdigit));
                         cout << "Enter email: ";
                         getline(cin, email);
                         cout << "Enter home address: ";
                         getline(cin, homeAddress);
-                        cout << "Enter city (Ha Noi or Sai Gon): ";
-                        getline(cin, city);
+                        do {
+                            cout << "Enter city (Ha Noi or Sai Gon): ";
+                            getline(cin, city);
+                            if (city != "Ha Noi" && city != "Sai Gon") {
+                                cout << "This application is only available to users in Ha Noi or Sai Gon.\n";
+                            }
+                        } while (city != "Ha Noi" && city != "Sai Gon");
                         // Add code here to get skills and availability from the user
                         Member* newMember = guest.registerMember(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
                         if (newMember != nullptr) {
