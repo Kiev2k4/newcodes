@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <limits>
 using namespace std;
 
 #include "../include/Member.h"
