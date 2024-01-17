@@ -107,6 +107,13 @@ void NonMember::viewSupporters() {
 }
 
 Member* NonMember::registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city) {
+    // Check if the username already exists
+    for (Member* member : System::getMembers()) {
+        if (member->getUsername() == username) {
+            cout << "Registration failed. The username " << username << " is already taken.\n";
+            return nullptr;
+        }
+    }
     if (city == "Ha Noi" || city == "Sai Gon") {
         Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
         System::addMember(newMember);  // Add the new member to the system
