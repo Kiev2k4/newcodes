@@ -1,4 +1,4 @@
-username4|full name4|password4|phone number4|email4|home address4|Sai Gon||
+# Format: username|fullName|password|phoneNumber|email|address|city|skills|availability
 testUser|testName|testPass|1234567890|test@email.com|123 Test St|Sai Gon||
 hostUser|hostName|hostPass|1234567890|host@email.com|123 Host St|Sai Gon||
 supporterUser|supporterName|supporterPass|0987654321|supporter@email.com|123 Supporter St|Sai Gon||
@@ -8,3 +8,4 @@ huy|huy nguyen|123|12345|huy@|123 qt|Ha Noi||
 hau|hau nguyen|123|123456|hau@gmail.com|123 qt|Ha Noi||
 dai|dai vu phat|909|09192837|phat@gmail.com|123 quang trung|Ha Noi|cleaning cooking |Monday 17:00 
 ngoc|ngoc nguyen|510|0987654321|ngocnguyen@gmail.com|123 quang trung|Ha Noi||
+ha|ha pham|123|09072913847|ha@gmail.com|123 Quang Trung|Sai Gon||

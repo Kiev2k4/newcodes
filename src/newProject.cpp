@@ -457,7 +457,6 @@ int main() {
                 cin >> adminPassword;
             } while (!admin.login(adminUsername, adminPassword));
             cout << "Login successful! Welcome, admin!\n";
-
             int adminChoice;
             do {
                 cout << "\nThis is your menu:\n";
