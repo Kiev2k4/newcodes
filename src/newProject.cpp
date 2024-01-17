@@ -385,11 +385,11 @@ int main() {
     cout << "EEET2482/COSC2082 ASSIGNMENT\n";
     cout << "\"TIME BANK\" APPLICATION\n";
     cout << "Instructor: Mr. Tran Duc Linh\n";
-    cout << "Group: Group No.\n";
-    cout << "sXXXXXXX, Student Name\n";
-    cout << "sXXXXXXX, Student Name\n";
-    cout << "sXXXXXXX, Student Name\n";
-    cout << "sXXXXXXX, Student Name\n";
+    cout << "Group: Group No.15\n";
+    cout << "s3978175, Nguyen Pham Tan Hau\n";
+    cout << "s3977739, Lee Jae Sung\n";
+    cout << "s3914412, Nguyen Duong Truong Thinh\n";
+    cout << "s3986423, Nguyen Huu Quoc Huy\n";
 
     int choice;
     do {
