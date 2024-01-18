@@ -17,7 +17,7 @@ private:
     string email;
     string homeAddress;
     vector<string> skills;
-    int credit_points = 20;
+    int creditPoints = 20;
     float skillRating;
     float supporterRating;
     float hostRating;
