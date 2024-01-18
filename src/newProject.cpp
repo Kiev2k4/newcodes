@@ -594,6 +594,10 @@ int main() {
                                 // Add your code here...
                                 break;
                         }
+
+                        if (memberChoice == 0) {
+                            return 0;  // This will exit the current function immediately
+                        }
                     } while (memberChoice != 0);
                 } else {
                     cout << "Login failed. Please check your username and password.\n";
@@ -604,6 +608,7 @@ int main() {
                     }
                 }
             }
+            break;
         }
         case 3:  // Admin
         {
