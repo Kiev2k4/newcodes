@@ -705,6 +705,7 @@ int main() {
 
                                 cout << "Enter points required per hour: ";
                                 cin >> newPointsPerHour;
+
                                 member->listAvailability(newAvailability, newPointsPerHour, newMinHostRating);
                                 cout << "Availability listed successfully!\n";
                                 System::saveData();
@@ -723,12 +724,14 @@ int main() {
                                 int creditPoints;
                                 float hostRating;
                                 cout << "Enter your city: ";
+                                cin.ignore();
                                 getline(cin, city);
                                 creditPoints = member->getCreditPoints();
-                                cout << "Your credit points: " << creditPoints;
+                                cout << "Your credit points: " << creditPoints << "\n";
                                 hostRating = member->getHostRating();
-                                cout << "Your host rating: " << hostRating;
+                                cout << "Your host rating: " << hostRating << "\n";
                                 vector<Member*> suitableSupporters = system.searchSupporters(member, city, creditPoints, hostRating);
+                                cout << "List of suitable supporters: \n";  
                                 for (Member* supporter : suitableSupporters)
                                 {
                                     supporter->viewInformation();
@@ -764,7 +767,8 @@ int main() {
                             {
                                 string usernameToBlock;
                                 cout << "Enter the username of the member you want to block: ";
-                                cin >> usernameToBlock;
+                                cin.ignore();
+                                getline(cin, usernameToBlock);
                                 // Assuming you have a method to get a member by username
                                 Member* memberToBlock = system.findMemberByUsername(usernameToBlock);
                                 if (memberToBlock) {
