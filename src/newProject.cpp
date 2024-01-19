@@ -665,7 +665,9 @@ int main() {
                                 break;
                             }
                             case 3:  // Unlist Availability
-                                // Add your code here...
+                                member->unlistAvailability();
+                                cout << "Availability unlisted successfully!\n";
+                                System::saveData();  // Remember to save the data after making changes
                                 break;
                             case 4:  // Search Supporters
                                 // Add your code here...
