@@ -19,7 +19,7 @@ public:
     static vector<Member*> getMembers();
     
     //Method to search for supporters
-    vector<Member*> searchSupporters(string city);
+    vector<Member*> searchSupporters(Member* currentMember, string city, int creditPoints, float hostRating);
 
     //Load data method
     void loadData();

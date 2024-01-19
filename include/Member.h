@@ -49,6 +49,7 @@ public:
     float getMinHostRating();
     bool getRequestAccepted();
     string getCity();
+    vector<Member*>& getBlockedMembers();
 
     //Setter methods
     void setUsername(string newUsername);
@@ -66,9 +67,6 @@ public:
     void setMinHostRating(float rating);
     void setRequestAccepted(bool status);
     void setCity(string newCity);
-
-    // Method to check if a member is available
-    bool isAvailable();
 
     bool login(string inputUsername, string inputPassword);
 

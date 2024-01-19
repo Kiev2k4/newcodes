@@ -70,12 +70,12 @@ void Member::setAvailability(vector<pair<string, pair<string, pair<string, strin
     availability = newAvailability;
 }
 
-void Member::setPointsPerHour(int points) { 
-    pointsPerHour = points; 
+void Member::setPointsPerHour(int newPointsPerHour) { 
+    pointsPerHour = newPointsPerHour; 
 }
 
-void Member::setMinHostRating(float rating) { 
-    minHostRating = rating; 
+void Member::setMinHostRating(float newMinHostRating) { 
+    minHostRating = newMinHostRating; 
 }
 
 void Member::setRequestAccepted(bool status) { requestAccepted = status; }
@@ -83,8 +83,6 @@ void Member::setRequestAccepted(bool status) { requestAccepted = status; }
 void Member::setCity(string newCity) {
     city = newCity;
 }
-
-bool Member::isAvailable() { return !availability.empty(); }
 
 void NonMember::viewSupporters() {
     for (Member* member : System::getMembers()) {
@@ -105,6 +103,8 @@ void NonMember::viewSupporters() {
                 cout << slot.first << " - " << slot.second.first << " from " << slot.second.second.first << " to " << slot.second.second.second << ", ";
             }
             cout << "\n";
+            cout << "> Points per hour: " << member->getPointsPerHour() << "\n";
+            cout << "> Minimum host rating: " << member->getMinHostRating() << "\n";
             cout << "> City: " << member->getCity() << "\n\n";
         }
     }
@@ -185,6 +185,8 @@ void Member::viewInformation() {
         cout << slot.first << " - " << slot.second.first << " from " << slot.second.second.first << " to " << slot.second.second.second << ", ";
     }
     cout << "\n";
+    cout << "> Points per hour: " << pointsPerHour << "\n";
+    cout << "> Minimum host rating: " << minHostRating << "\n";
     cout << "> City: " << city << "\n";
 }
 
@@ -209,6 +211,8 @@ bool Member::usePoints(int points) {
 void Member::topUpPoints(int cash, string inputPassword) {
     if (password == inputPassword) {
         creditPoints += cash * CREDIT_POINTS_PER_DOLLAR;  // Use the constant here
+        this->setCreditPoints(creditPoints);
+        System::saveData();
         cout << "Top up successfully. Your credit points: " << creditPoints;
     } else {
         cout << "Incorrect password. Cannot authorize transaction.\n";
@@ -238,8 +242,8 @@ void Member::rateHost(Member* host, float rating) {
 // Method to list availability
 void Member::listAvailability(vector<pair<string, pair<string, pair<string, string>>>> newAvailability, int newPointsPerHour, float newMinHostRating) {
     availability = newAvailability;
-    pointsPerHour = newPointsPerHour;
-    minHostRating = newMinHostRating;
+    setPointsPerHour(newPointsPerHour);
+    setMinHostRating(newMinHostRating);
 }
 
 // Method to unlist availability
@@ -251,7 +255,9 @@ void Member::unlistAvailability() {
 
 // Method to book a supporter
 bool Member::bookSupporter(Member* supporter) {
-    if (creditPoints >= supporter->getPointsPerHour() && hostRating >= supporter->getMinHostRating()) {
+    if (supporter->isBlocked(this)) {
+        return false;  // Current member is blocked by the supporter
+    } else if (creditPoints >= supporter->getPointsPerHour() && hostRating >= supporter->getMinHostRating()) {
         creditPoints -= supporter->getPointsPerHour();
         return true;  // Booking successful
     } else {
@@ -291,6 +297,8 @@ void Member::blockMember(Member* member) {
     blockedMembers.push_back(member);
 }
 
+vector<Member*>& Member::getBlockedMembers(){ return blockedMembers; }
+
 // Method to check if a member is blocked
 bool Member::isBlocked(Member* member) {
     return std::find(blockedMembers.begin(), blockedMembers.end(), member) != blockedMembers.end();
@@ -309,10 +317,10 @@ void Admin::resetMemberPassword(Member* member, string newPassword) {
 }
 
 // Method to search for all available suitable supporters for a specified city
-vector<Member*> System::searchSupporters(string city) {
+vector<Member*> System::searchSupporters(Member* currentMember, string city, int creditPoints, float hostRating) {
     vector<Member*> suitableSupporters;
     for (Member* member : members) {
-        if (member->getCity() == city && member->isAvailable()) {
+        if (!member->isBlocked(currentMember) && member->getCity() == city && member->getPointsPerHour() <= creditPoints && member->getMinHostRating() <= hostRating) {
             suitableSupporters.push_back(member);
         }
     }
@@ -337,6 +345,7 @@ void System::saveData() {
         cout << "Error: Could not open file for writing.\n";
         return;
     }
+    outFile << "name|username|password|phoneNumber|email|homeAddress|city|creditPoints|skills|availability|pointsPerHour|minHostRating|blockedMembers" << "\n";
     for (Member* member : members) {
         outFile << member->getUsername() << "|"
                 << member->getFullName() << "|"
@@ -354,7 +363,13 @@ void System::saveData() {
         for (const auto& slot : member->getAvailability()) {
             outFile << slot.first << "," << slot.second.first << "," << slot.second.second.first << "," << slot.second.second.second << ";";
         }
-        outFile << "\n";
+        outFile << "|";
+        outFile << member->getPointsPerHour() << "|";
+        outFile << member->getMinHostRating() << "|";
+        for (Member* blockedMember : member->getBlockedMembers()) {
+            outFile << blockedMember->getUsername() << ",";
+        }
+        outFile << "\n"; 
     }
     outFile.close();
 }
@@ -368,10 +383,15 @@ void System::loadData() {
     }
     string line;
     getline(inFile, line);// Skip the first line
+
+    // First pass: Create all the Member objects and store the blocked member usernames for later
+    map<Member*, std::vector<std::string>> blockedUsernamesMap;
     while (getline(inFile, line)) {
         stringstream ss(line);
         string username, fullName, password, phoneNumber, email, homeAddress, city, skills, availability;
-        int creditPoints; // Variable to store the credit points
+        int creditPoints, pointsPerHour;
+        float minHostRating;
+         // Variable to store the credit points
         getline(ss, username, '|');
         getline(ss, fullName, '|');
         getline(ss, password, '|');
@@ -384,11 +404,9 @@ void System::loadData() {
 
         // Load the skills
         getline(ss, skills, '|');
-        cout << "Parsed skills: " << skills << endl;  // Debug print statement
         vector<string> skillVector = split(skills, ',');
         // Load the availability
         getline(ss, availability, '|');
-        cout << "Parsed availability: " << availability << endl;  // Debug print statement
 
         vector<pair<string, pair<string, pair<string, string>>>> availabilityVector;
         stringstream ss_availability(availability);
@@ -402,17 +420,45 @@ void System::loadData() {
             getline(ss_slot, startTime, ',');
             getline(ss_slot, endTime, ',');
 
-            cout << "Parsed day: " << day << endl;  // Debug print statement
-            cout << "Parsed skill: " << skill << endl;  // Debug print statement
-            cout << "Parsed start time: " << startTime << endl;  // Debug print statement
-            cout << "Parsed end time: " << endTime << endl;  // Debug print statement
-
             availabilityVector.push_back(make_pair(day, make_pair(skill, make_pair(startTime, endTime))));
         }
+
+        ss >> pointsPerHour;
+        ss.ignore(numeric_limits<streamsize>::max(), '|');
+
+        string minHostRatingStr;
+        getline(ss, minHostRatingStr, '|');
+        if (!minHostRatingStr.empty()) {
+            minHostRating = stof(minHostRatingStr);
+        } else {
+            minHostRating = 0;  // Default value
+        }
+
         Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skillVector, availabilityVector, city);
         newMember->setCreditPoints(creditPoints); // Set the credit points for the member
+        newMember->setPointsPerHour(pointsPerHour);
+        newMember->setMinHostRating(minHostRating);
         members.push_back(newMember);
+
+        // Store the blocked member usernames for later
+        string blockedMembersStr;
+        getline(ss, blockedMembersStr, '|');
+        vector<string> blockedMembersUsernames = split(blockedMembersStr, ',');
+        blockedUsernamesMap[newMember] = blockedMembersUsernames;
     }
+
+    // Second pass: Set up the blocked relationships
+    for (auto& pair : blockedUsernamesMap) {
+        Member* member = pair.first;
+        vector<string>& blockedMembersUsernames = pair.second;
+        for (const string& blockedMemberUsername : blockedMembersUsernames) {
+            Member* blockedMember = findMemberByUsername(blockedMemberUsername);
+            if (blockedMember) {
+                member->blockMember(blockedMember);
+            }
+        }
+    }
+
     inFile.close();
 }
 
@@ -588,7 +634,7 @@ int main() {
                         cout << "\nThis is your menu:\n";
                         cout << "0. Exit\n";
                         cout << "1. View Information\n";
-                        cout << "2. List Availability\n";
+                        cout << "2. List Availability (brand new)\n";
                         cout << "3. Unlist Availability\n";
                         cout << "4. Search Supporters\n";
                         cout << "5. Book a Supporter\n";
@@ -600,7 +646,7 @@ int main() {
                         cout << "11. Top up Credit Points\n";
                         cout << "Enter your choice: ";
                         cin >> memberChoice;
-                        while(cin.fail() || memberChoice < 0 || memberChoice > 10) {
+                        while(cin.fail() || memberChoice < 0 || memberChoice > 11) {
                             cin.clear(); // clear input buffer to restore cin to a usable state
                             cin.ignore(INT_MAX, '\n'); // ignore last input
                             cout << "You can only enter numbers 0 - 10. Please enter a valid choice: ";
@@ -631,7 +677,6 @@ int main() {
                                             cin.ignore();
                                         }
                                         getline(cin, day);
-                                        cout << day;
                                     } while (day != "Monday" && day != "Tuesday" && day != "Wednesday" && day != "Thursday" && day != "Friday" && day != "Saturday" && day != "Sunday");
                                     do {
                                         cout << "Enter skill for slot " << i+1 << " (";
@@ -649,14 +694,15 @@ int main() {
                                         cout << "Enter end time for slot " << i+1 << " (format: HH:MM): ";
                                         getline(cin, endTime);
                                     } while (!isValidTime(endTime));
-                                    cout << "Enter minimum required host-rating score (optional, press Enter to skip): ";
-                                    string minHostRatingStr;
-                                    getline(cin, minHostRatingStr);
-                                    if (!minHostRatingStr.empty()) {
-                                        newMinHostRating = stof(minHostRatingStr);
-                                    }
                                     newAvailability.push_back(make_pair(day, make_pair(skill, make_pair(startTime, endTime))));
                                 }
+                                cout << "Enter minimum required host-rating score (optional, press Enter to skip): ";
+                                string minHostRatingStr;
+                                getline(cin, minHostRatingStr);
+                                if (!minHostRatingStr.empty()) {
+                                    newMinHostRating = stof(minHostRatingStr);
+                                }
+
                                 cout << "Enter points required per hour: ";
                                 cin >> newPointsPerHour;
                                 member->listAvailability(newAvailability, newPointsPerHour, newMinHostRating);
@@ -665,16 +711,49 @@ int main() {
                                 break;
                             }
                             case 3:  // Unlist Availability
+                            {
                                 member->unlistAvailability();
                                 cout << "Availability unlisted successfully!\n";
                                 System::saveData();  // Remember to save the data after making changes
                                 break;
+                            }
                             case 4:  // Search Supporters
-                                // Add your code here...
+                            {
+                                string city;
+                                int creditPoints;
+                                float hostRating;
+                                cout << "Enter your city: ";
+                                getline(cin, city);
+                                creditPoints = member->getCreditPoints();
+                                cout << "Your credit points: " << creditPoints;
+                                hostRating = member->getHostRating();
+                                cout << "Your host rating: " << hostRating;
+                                vector<Member*> suitableSupporters = system.searchSupporters(member, city, creditPoints, hostRating);
+                                for (Member* supporter : suitableSupporters)
+                                {
+                                    supporter->viewInformation();
+                                }
                                 break;
+                            }
                             case 5:  // Book a Supporter
-                                // Add your code here...
+                            {
+                                string supporterUsername;
+                                cout << "Enter the username of the supporter you want to book: ";
+                                cin.ignore();  // Ignore the newline left in the buffer by the previous input operation
+                                getline(cin, supporterUsername);
+                                // Assuming you have a method to get a member by username
+                                Member* supporter = system.findMemberByUsername(supporterUsername);
+                                if (supporter) {
+                                    if (member->bookSupporter(supporter)) {
+                                        cout << "You have successfully booked " << supporterUsername << ".\n";
+                                    } else {
+                                        cout << "You cannot book this supporter. Either you are blocked by them, or you do not have enough credit points, or your host rating is too low.\n";
+                                    }
+                                } else {
+                                    cout << "No supporter found with the username " << supporterUsername << ".\n";
+                                }
                                 break;
+                            }
                             case 6:  // View Requests
                                 // Add your code here...
                                 break;
@@ -682,8 +761,20 @@ int main() {
                                 // Add your code here...
                                 break;
                             case 8:  // Block a Member
-                                // Add your code here...
+                            {
+                                string usernameToBlock;
+                                cout << "Enter the username of the member you want to block: ";
+                                cin >> usernameToBlock;
+                                // Assuming you have a method to get a member by username
+                                Member* memberToBlock = system.findMemberByUsername(usernameToBlock);
+                                if (memberToBlock) {
+                                    member->blockMember(memberToBlock);
+                                    cout << "You have successfully blocked " << usernameToBlock << ".\n";
+                                } else {
+                                    cout << "No member found with the username " << usernameToBlock << ".\n";
+                                }
                                 break;
+                            }
                             case 9:  // Rate a Supporter
                                 // Add your code here...
                                 break;
