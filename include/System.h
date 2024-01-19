@@ -17,14 +17,14 @@ public:
 
     // Getter for members
     static vector<Member*> getMembers();
-
-    pair<string, string> loadAdminData();
     
     //Method to search for supporters
     vector<Member*> searchSupporters(string city);
 
     //Load data method
     void loadData();
+
+    pair<string, string> loadAdminData();
 
     //Save data method
     static void saveData();
