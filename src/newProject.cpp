@@ -4,6 +4,7 @@
 #include <sstream>
 #include <algorithm>
 #include <limits>
+#include <regex>
 using namespace std;
 
 #include "../include/Member.h"
@@ -18,7 +19,7 @@ vector<Member*> System::members;
 vector<string> split(const string& s, char delimiter);  // Function declaration
 
 // Now define the methods
-Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city)
+Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<pair<string, pair<string, pair<string, string>>>> availability, string city)
     : username(username), fullName(fullName), password(password), phoneNumber(phoneNumber), email(email), homeAddress(homeAddress), skills(skills), availability(availability), city(city) {
 }
 
@@ -29,7 +30,7 @@ string Member::getPhoneNumber() { return phoneNumber; }
 string Member::getEmail() { return email; }
 string Member::getHomeAddress() { return homeAddress; }
 vector<string> Member::getSkills() { return skills; }
-vector<string> Member::getAvailability() { return availability; }
+vector<pair<string, pair<string, pair<string, string>>>> Member::getAvailability() { return availability; }
 int Member::getPointsPerHour() { return pointsPerHour; }
 float Member::getMinHostRating() { return minHostRating; }
 bool Member::getRequestAccepted() { return requestAccepted; }
@@ -65,7 +66,7 @@ void Member::setSkills(vector<string> newSkills) {
     skills = newSkills;
 }
 
-void Member::setAvailability(vector<string> newAvailability) {
+void Member::setAvailability(vector<pair<string, pair<string, pair<string, string>>>> newAvailability) {
     availability = newAvailability;
 }
 
@@ -100,8 +101,8 @@ void NonMember::viewSupporters() {
             }
             cout << "\n";
             cout << "> Availability: ";
-            for (const string& period : member->getAvailability()) {
-                cout << period << ", ";
+            for (const auto& slot : member->getAvailability()) {
+                cout << slot.first << " - " << slot.second.first << " from " << slot.second.second.first << " to " << slot.second.second.second << ", ";
             }
             cout << "\n";
             cout << "> City: " << member->getCity() << "\n\n";
@@ -109,7 +110,7 @@ void NonMember::viewSupporters() {
     }
 }
 
-Member* NonMember::registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city) {
+Member* NonMember::registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<pair<string, pair<string, pair<string, string>>>> availability, string city) {
     char acceptFee;
     // Add code here to get skills from the user
     string skillsInput;
@@ -180,8 +181,8 @@ void Member::viewInformation() {
     }
     cout << "\n";
     cout << "> Availability: ";
-    for (const string& period : availability) {
-        cout << period << ", ";
+    for (const auto& slot : availability) {
+        cout << slot.first << " - " << slot.second.first << " from " << slot.second.second.first << " to " << slot.second.second.second << ", ";
     }
     cout << "\n";
     cout << "> City: " << city << "\n";
@@ -235,7 +236,7 @@ void Member::rateHost(Member* host, float rating) {
 }
 
 // Method to list availability
-void Member::listAvailability(vector<string> newAvailability, int newPointsPerHour, float newMinHostRating) {
+void Member::listAvailability(vector<pair<string, pair<string, pair<string, string>>>> newAvailability, int newPointsPerHour, float newMinHostRating) {
     availability = newAvailability;
     pointsPerHour = newPointsPerHour;
     minHostRating = newMinHostRating;
@@ -350,8 +351,8 @@ void System::saveData() {
             outFile << skill << ",";
         }
         outFile << "|";
-        for (const string& period : member->getAvailability()) {
-            outFile << period << ",";
+        for (const auto& slot : member->getAvailability()) {
+            outFile << slot.first << "," << slot.second.first << "," << slot.second.second.first << "," << slot.second.second.second << ";";
         }
         outFile << "\n";
     }
@@ -379,12 +380,35 @@ void System::loadData() {
         getline(ss, homeAddress, '|');
         getline(ss, city, '|');
         ss >> creditPoints; // Load the credit points
-        // Load the availability
-        getline(ss, availability, '|');
-        vector<string> availabilityVector = split(availability, ',');
+        ss.ignore(numeric_limits<streamsize>::max(), '|');
+
         // Load the skills
         getline(ss, skills, '|');
+        cout << "Parsed skills: " << skills << endl;  // Debug print statement
         vector<string> skillVector = split(skills, ',');
+        // Load the availability
+        getline(ss, availability, '|');
+        cout << "Parsed availability: " << availability << endl;  // Debug print statement
+
+        vector<pair<string, pair<string, pair<string, string>>>> availabilityVector;
+        stringstream ss_availability(availability);
+        string slot;
+
+        while (getline(ss_availability, slot, ';')) {
+            stringstream ss_slot(slot);
+            string day, skill, startTime, endTime;
+            getline(ss_slot, day, ',');
+            getline(ss_slot, skill, ',');
+            getline(ss_slot, startTime, ',');
+            getline(ss_slot, endTime, ',');
+
+            cout << "Parsed day: " << day << endl;  // Debug print statement
+            cout << "Parsed skill: " << skill << endl;  // Debug print statement
+            cout << "Parsed start time: " << startTime << endl;  // Debug print statement
+            cout << "Parsed end time: " << endTime << endl;  // Debug print statement
+
+            availabilityVector.push_back(make_pair(day, make_pair(skill, make_pair(startTime, endTime))));
+        }
         Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skillVector, availabilityVector, city);
         newMember->setCreditPoints(creditPoints); // Set the credit points for the member
         members.push_back(newMember);
@@ -415,6 +439,11 @@ bool isValidName(string name) {
         }
     }
     return true;
+}
+
+bool isValidTime(const string& str) {
+    regex r("^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$");
+    return regex_match(str, r);
 }
 
 int main() {
@@ -472,7 +501,7 @@ int main() {
                         break;
                     case 2:  // Register as Member
                         string username, fullName, password, phoneNumber, email, homeAddress, city;
-                        vector<string> skills, availability;
+                        vector<string> skills;
                         bool validEmail = false;
                         bool validName = false;
                         bool validUsername = false;
@@ -529,6 +558,7 @@ int main() {
                             }
                         } while (city != "Ha Noi" && city != "Sai Gon");
                         // Add code here to get skills and availability from the user
+                        vector<pair<string, pair<string, pair<string, string>>>> availability = {};
                         Member* newMember = guest.registerMember(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
                         if (newMember != nullptr) {
                             cout << "> Registration successful! Welcome, " << newMember->getFullName() << "!\n\n";
@@ -581,8 +611,59 @@ int main() {
                                 member->viewInformation();
                                 break;
                             case 2:  // List Availability
-                                // Add your code here...
+                            {
+                                vector<pair<string, pair<string, pair<string, string>>>> newAvailability;
+                                int newPointsPerHour;
+                                float newMinHostRating;
+                                string day, skill, startTime, endTime;
+                                cout << "Enter the number of availability slots: ";
+                                int numSlots;
+                                while (!(cin >> numSlots)) {
+                                    cin.clear();
+                                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                                    cout << "Invalid input. Please enter a number: ";
+                                }
+                                for (int i = 0; i < numSlots; i++) {
+                                    do {
+                                        cout << "Enter day of the week for slot " << i+1 << " (e.g., Monday): ";
+                                        if (i==0)
+                                        {
+                                            cin.ignore();
+                                        }
+                                        getline(cin, day);
+                                        cout << day;
+                                    } while (day != "Monday" && day != "Tuesday" && day != "Wednesday" && day != "Thursday" && day != "Friday" && day != "Saturday" && day != "Sunday");
+                                    do {
+                                        cout << "Enter skill for slot " << i+1 << " (";
+                                        for (const string& skill : member->getSkills()) {
+                                            cout << skill << ", ";
+                                        }
+                                        cout << "): ";
+                                        getline(cin, skill);
+                                    } while (find(member->getSkills().begin(), member->getSkills().end(), skill) == member->getSkills().end());
+                                    do {
+                                        cout << "Enter start time for slot " << i+1 << " (format: HH:MM): ";
+                                        getline(cin, startTime);
+                                    } while (!isValidTime(startTime));
+                                    do {
+                                        cout << "Enter end time for slot " << i+1 << " (format: HH:MM): ";
+                                        getline(cin, endTime);
+                                    } while (!isValidTime(endTime));
+                                    cout << "Enter minimum required host-rating score (optional, press Enter to skip): ";
+                                    string minHostRatingStr;
+                                    getline(cin, minHostRatingStr);
+                                    if (!minHostRatingStr.empty()) {
+                                        newMinHostRating = stof(minHostRatingStr);
+                                    }
+                                    newAvailability.push_back(make_pair(day, make_pair(skill, make_pair(startTime, endTime))));
+                                }
+                                cout << "Enter points required per hour: ";
+                                cin >> newPointsPerHour;
+                                member->listAvailability(newAvailability, newPointsPerHour, newMinHostRating);
+                                cout << "Availability listed successfully!\n";
+                                System::saveData();
                                 break;
+                            }
                             case 3:  // Unlist Availability
                                 // Add your code here...
                                 break;

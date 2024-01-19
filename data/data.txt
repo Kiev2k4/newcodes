@@ -1,7 +1,6 @@
-ha|ha pham|123|09072913847|ha@gmail.com|123 Quang Trung|Sai Gon|0||
-hau123|hau nguyen|nguyen123|097899943|hau@gmail.com|123 nguyen van luong|Ha Noi|0||
-phung|phung nguyen|123|099734|phung@gmail.com|123 quang trung|Sai Gon|0||
+username|fullName|password|phoneNumber|gmail|homeAddress|city|creditPoints|skills|availability
+phung|phung nguyen|123|099734|phung@gmail.com|123 quang trung|Sai Gon|20||
 po123|po lee|123|018247|po@gmail.com|123 Nguyen Thi Minh Khai|Sai Gon|20||
 khang|khang nguyen|123|0087431|khang@gmail.com|123 Quang Trung|Sai Gon|20||
 thinh123|thinh nguyen|123|091743938|thinh@gmail.com|123 Nguyen Van Luong|Sai Gon|20|cleaning, cooking,|
-dao|tran hung dao|123|0947982|dao@gmail.com|123 Tran Quoc Tuan|Sai Gon|20|cleaning, cooking,|
+dao|tran hung dao|12|0947982|dao@gmail.com|123 Tran Quoc Tuan|Sai Gon|20|cleaning, cooking,|Monday,cleaning,17:00,19:00;Tuesday,cooking,10:00,12:00;

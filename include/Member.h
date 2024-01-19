@@ -1,8 +1,10 @@
 #ifndef MEMBER_H
 #define MEMBER_H
 
+#include <iostream>
 #include <vector>
 #include <string>
+#include <sstream>
 using namespace std;
 
 // Forward declaration of System class
@@ -21,7 +23,7 @@ private:
     float skillRating;
     float supporterRating;
     float hostRating;
-    vector<string> availability;
+    vector<pair<string, pair<string, pair<string, string>>>> availability;
     vector<Member*> blockedMembers;
     int pointsPerHour;
     float minHostRating;
@@ -29,7 +31,7 @@ private:
     string city;
 public:
     // Constructor
-    Member(string username = "", string fullName = "", string password = "", string phoneNumber = "", string email = "", string homeAddress = "", vector<string> skills = {}, vector<string> availability = {}, string city = "");
+    Member(string username = "", string fullName = "", string password = "", string phoneNumber = "", string email = "", string homeAddress = "", vector<string> skills = {}, vector<pair<string, pair<string, pair<string, string>>>> availability = {}, string city = "");
 
     // Getter methods
     string getUsername();
@@ -42,7 +44,7 @@ public:
     float getSupporterRating();
     float getHostRating();
     vector<string> getSkills();
-    vector<string> getAvailability();
+    vector<pair<string, pair<string, pair<string, string>>>> getAvailability();
     int getPointsPerHour();
     float getMinHostRating();
     bool getRequestAccepted();
@@ -59,7 +61,7 @@ public:
     void setSupporterRating(float rating);
     void setHostRating(float rating);
     void setSkills(vector<string> newSkills);
-    void setAvailability(vector<string> newAvailability);
+    void setAvailability(vector<pair<string, pair<string, pair<string, string>>>> newAvailability);
     void setPointsPerHour(int points);
     void setMinHostRating(float rating);
     void setRequestAccepted(bool status);
@@ -84,7 +86,7 @@ public:
     void rateHost(Member* host, float rating);
 
     //Availability method
-    void listAvailability(vector<string> newAvailability, int newPointsPerHour, float newMinHostRating);
+    void listAvailability(vector<pair<string, pair<string, pair<string, string>>>> newAvailability, int newPointsPerHour, float newMinHostRating);
     void unlistAvailability();
 
     //Booking and request method
