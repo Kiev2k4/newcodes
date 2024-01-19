@@ -96,12 +96,12 @@ void NonMember::viewSupporters() {
             cout << "> Home address: " << member->getHomeAddress() << "\n";
             cout << "> Skills: ";
             for (const string& skill : member->getSkills()) {
-                cout << skill << " ";
+                cout << skill << ", ";
             }
             cout << "\n";
             cout << "> Availability: ";
             for (const string& period : member->getAvailability()) {
-                cout << period << " ";
+                cout << period << ", ";
             }
             cout << "\n";
             cout << "> City: " << member->getCity() << "\n\n";
@@ -111,6 +111,13 @@ void NonMember::viewSupporters() {
 
 Member* NonMember::registerMember(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<string> availability, string city) {
     char acceptFee;
+    // Add code here to get skills from the user
+    string skillsInput;
+    do {
+        cout << "Enter your skills (format: skill1, skill2, skill3): ";
+        getline(cin, skillsInput);
+    } while (skillsInput.empty());
+    vector<string> skillsList = split(skillsInput, ',');
     while (true) {
         cout << "There is an initial entry fee of $" << REGISTRATION_FEE << " to register as a member. Do you accept this (y/n)? ";
         cin >> acceptFee;
@@ -123,7 +130,7 @@ Member* NonMember::registerMember(string username, string fullName, string passw
     if (acceptFee == 'y' || acceptFee == 'Y') {
         cout << "You have been charged $20 for the registration fee.\n";
         if (city == "Ha Noi" || city == "Sai Gon") {
-            Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skills, availability, city);
+            Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skillsList, availability, city);
             newMember->setCreditPoints(REGISTRATION_FEE * CREDIT_POINTS_PER_DOLLAR);  // Use the constants here
             System::addMember(newMember);  // Add the new member to the system
             System::saveData();
@@ -160,22 +167,24 @@ bool Member::login(string inputUsername, string inputPassword) {
 }
 
 void Member::viewInformation() {
-    cout << "Username: " << username << "\n";
-    cout << "Full Name: " << fullName << "\n";
-    cout << "Phone Number: " << phoneNumber << "\n";
-    cout << "Email: " << email << "\n";
-    cout << "Home Address: " << homeAddress << "\n";
-    cout << "Skills: ";
+    cout << "> Username: " << username << "\n";
+    cout << "> Full Name: " << fullName << "\n";
+    cout << "> Phone Number: " << phoneNumber << "\n";
+    cout << "> Email: " << email << "\n";
+    cout << "> Home Address: " << homeAddress << "\n";
+    cout << "> Credit Points: " << creditPoints << "\n";
+    // Display the skills
+    cout << "> Skills: ";
     for (const string& skill : skills) {
-        cout << skill << " ";
+        cout << skill << ", ";
     }
     cout << "\n";
-    cout << "Availability: ";
+    cout << "> Availability: ";
     for (const string& period : availability) {
-        cout << period << " ";
+        cout << period << ", ";
     }
     cout << "\n";
-    cout << "City: " << city << "\n";
+    cout << "> City: " << city << "\n";
 }
 
 // Getter and setter for credit points
@@ -199,6 +208,7 @@ bool Member::usePoints(int points) {
 void Member::topUpPoints(int cash, string inputPassword) {
     if (password == inputPassword) {
         creditPoints += cash * CREDIT_POINTS_PER_DOLLAR;  // Use the constant here
+        cout << "Top up successfully. Your credit points: " << creditPoints;
     } else {
         cout << "Incorrect password. Cannot authorize transaction.\n";
     }
@@ -335,12 +345,13 @@ void System::saveData() {
                 << member->getHomeAddress() << "|"
                 << member->getCity() << "|"
                 << member->getCreditPoints() << "|"; // Save the credit points
+        // Save the skills
         for (const string& skill : member->getSkills()) {
-            outFile << skill << " ";
+            outFile << skill << ",";
         }
         outFile << "|";
         for (const string& period : member->getAvailability()) {
-            outFile << period << " ";
+            outFile << period << ",";
         }
         outFile << "\n";
     }
@@ -368,10 +379,12 @@ void System::loadData() {
         getline(ss, homeAddress, '|');
         getline(ss, city, '|');
         ss >> creditPoints; // Load the credit points
-        getline(ss, skills, '|');
+        // Load the availability
         getline(ss, availability, '|');
-        vector<string> skillVector = split(skills, ' ');
-        vector<string> availabilityVector = split(availability, ' ');
+        vector<string> availabilityVector = split(availability, ',');
+        // Load the skills
+        getline(ss, skills, '|');
+        vector<string> skillVector = split(skills, ',');
         Member* newMember = new Member(username, fullName, password, phoneNumber, email, homeAddress, skillVector, availabilityVector, city);
         newMember->setCreditPoints(creditPoints); // Set the credit points for the member
         members.push_back(newMember);
@@ -554,6 +567,7 @@ int main() {
                         cout << "8. Block a Member\n";
                         cout << "9. Rate a Supporter\n";
                         cout << "10. Rate a Host\n";
+                        cout << "11. Top up Credit Points\n";
                         cout << "Enter your choice: ";
                         cin >> memberChoice;
                         while(cin.fail() || memberChoice < 0 || memberChoice > 10) {
@@ -593,8 +607,26 @@ int main() {
                             case 10:  // Rate a Host
                                 // Add your code here...
                                 break;
+                            case 11:  // Top up Credit Points
+                            {
+                                int cash;
+                                string inputPassword;
+                                cout << "Enter the amount of cash you want to top up: ";
+                                cin >> cash;
+                                // Check if the input is valid
+                                while(cin.fail() || cash < 0) {
+                                    cin.clear(); // clear input buffer to restore cin to a usable state
+                                    cin.ignore(INT_MAX, '\n'); // ignore last input
+                                    cout << "You can only enter a positive integer. Please enter a valid amount: ";
+                                    cin >> cash;
+                                }
+                                cout << "Enter your password to authorize the transaction: ";
+                                cin.ignore();
+                                getline(cin, inputPassword);
+                                member->topUpPoints(cash, inputPassword);
+                                break;
+                            }
                         }
-
                         if (memberChoice == 0) {
                             return 0;  // This will exit the current function immediately
                         }
