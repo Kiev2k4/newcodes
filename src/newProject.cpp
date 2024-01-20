@@ -112,7 +112,8 @@ void NonMember::viewSupporters() {
             // Display the average skill ratings
             cout << "> Skill Ratings: ";
             for (const string& skill : member->getSkills()) {
-                cout << skill << " (average rating: " << member->getAverageSkillRating(skill) << "), ";
+                float avgRating = member->getAverageSkillRating(skill);
+                cout << skill << " (average rating: " << (avgRating != 0.0 ? to_string(avgRating) : "not available") << "), ";
             }
             cout << "\n";
         }
@@ -203,7 +204,8 @@ void Member::viewInformation() {
     // Display the average skill ratings
     cout << "> Skill Ratings: ";
     for (const string& skill : skills) {
-        cout << skill << " (average rating: " << getAverageSkillRating(skill) << "), ";
+        float avgRating = getAverageSkillRating(skill);
+        cout << skill << " (average rating: " << (avgRating != 0.0 ? to_string(avgRating) : "not available") << "), ";
     }
     cout << "\n";
 }
@@ -509,35 +511,30 @@ void System::loadData() {
         getline(ss, hostRatingStr, '|');
         getline(ss, supporterRatingStr, '|');
         getline(ss, skillRatingStr, '|');
-        try {
-            if (!hostRatingStr.empty()) {
-                float hostRating = stof(hostRatingStr);
-                newMember->setAverageHostRating(hostRating);
-            }
-            if (!supporterRatingStr.empty()) {
-                float supporterRating = stof(supporterRatingStr);
-                newMember->setAverageSupporterRating(supporterRating);
-            }
-            if (!skillRatingStr.empty()) {
-                stringstream ss_skillRating(skillRatingStr);
-                string skillRating;
-                while (getline(ss_skillRating, skillRating, ';')) {
-                    stringstream ss_skill(skillRating);
-                    string skill;
-                    getline(ss_skill, skill, ':');
-                    string averageRatingStr;
-                    getline(ss_skill, averageRatingStr, ':');
+        if (!hostRatingStr.empty()) {
+            float hostRating = stof(hostRatingStr);
+            newMember->setAverageHostRating(hostRating);
+        }
+        if (!supporterRatingStr.empty()) {
+            float supporterRating = stof(supporterRatingStr);
+            newMember->setAverageSupporterRating(supporterRating);
+        }
+        if (!skillRatingStr.empty()) {
+            stringstream ss_skillRating(skillRatingStr);
+            string skillRating;
+            while (getline(ss_skillRating, skillRating, ';')) {
+                stringstream ss_skill(skillRating);
+                string skill;
+                getline(ss_skill, skill, ':');
+                string averageRatingStr;
+                getline(ss_skill, averageRatingStr, ':');
+                if (!averageRatingStr.empty()) {
                     float averageRating = stof(averageRatingStr);
                     newMember->setAverageSkillRating(skill, averageRating);
                 }
             }
-        } catch (const std::invalid_argument& ia) {
-            std::cerr << "Invalid argument: Unable to convert string to float. " << ia.what() << '\n';
-            // handle error as appropriate for your application
-        } catch (const std::out_of_range& oor) {
-            std::cerr << "Out of Range error: Unable to convert string to float. " << oor.what() << '\n';
-            // handle error as appropriate for your application
         }
+
     }
 
     // Second pass: Set up the blocked relationships
