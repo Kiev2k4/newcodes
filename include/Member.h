@@ -28,6 +28,8 @@ private:
     vector<pair<string, pair<string, pair<string, string>>>> availability;
     vector<Member*> blockedMembers;
     map<string, pair<float,int>> skillRatings;
+    int hostRatingCount;
+    int supporterRatingCount;
     int pointsPerHour;
     float minHostRating;
     bool requestAccepted = false;
@@ -47,6 +49,9 @@ public:
     float getAverageSkillRating(const string& skill);
     float getSupporterRating();
     float getHostRating();
+
+    int getHostRatingCount();
+    int getSupporterRatingCount();
 
     vector<string> getSkills();
     vector<pair<string, pair<string, pair<string, string>>>> getAvailability();
@@ -69,8 +74,8 @@ public:
     void setMinHostRating(float rating);
     void setRequestAccepted(bool status);
     void setCity(string newCity);
-    void setAverageHostRating(float rating);
-    void setAverageSupporterRating(float rating);
+    void setAverageHostRating(float rating, int count);
+    void setAverageSupporterRating(float rating, int count);
 
     void setAverageSkillRating(const string& skill, float averageRating); 
 

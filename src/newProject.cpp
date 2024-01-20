@@ -263,13 +263,33 @@ void Member::setAverageSkillRating(const string& skill, float averageRating) {
     }
 }
 
-float Member::getSupporterRating() { return getAverage(supporterRatings); }
-void Member::addSupporterRating(float rating) { supporterRatings.push_back(rating); }
-void Member::setAverageSupporterRating(float rating){ this->averageSupporterRating = rating; }
+float Member::getSupporterRating() { return this->averageSupporterRating; }
+void Member::addSupporterRating(float rating) { 
+    supporterRatings.push_back(rating);
+    supporterRatingCount++;
+    averageSupporterRating = getAverage(supporterRatings); 
+}
+void Member::setAverageSupporterRating(float rating, int count){ 
+    this->averageSupporterRating = rating;
+    this->supporterRatingCount = count; 
+}
+int Member::getSupporterRatingCount(){
+    return supporterRatingCount;
+}
 
-float Member::getHostRating() { return getAverage(hostRatings); }
-void Member::addHostRating(float rating) { hostRatings.push_back(rating); }
-void Member::setAverageHostRating(float rating){ this->averageHostRating = rating; }
+float Member::getHostRating() { return this->averageHostRating; }
+void Member::addHostRating(float rating) { 
+    hostRatings.push_back(rating);
+    hostRatingCount++;
+    averageHostRating = getAverage(hostRatings); 
+}
+void Member::setAverageHostRating(float rating, int count){ 
+    this->averageHostRating = rating;
+    this->hostRatingCount = count; 
+}
+int Member::getHostRatingCount(){
+    return hostRatingCount;
+}
 
 // Method for a member (as a host) to rate their supporter
 void Member::rateSupporter(Member* supporter, float rating) {
@@ -424,8 +444,8 @@ void System::saveData() {
             outFile << blockedMember->getUsername() << ",";
         }
         outFile << "|";
-        outFile << member->getHostRating() << "|";  // Save the host rating
-        outFile << member->getSupporterRating() << "|";  // Save the supporter rating
+        outFile << member->getHostRating() << "," << member->getHostRatingCount() << "|";  // Save the average host rating and the count of ratings
+        outFile << member->getSupporterRating() << "," << member->getSupporterRatingCount() << "|";  // Save the average supporter rating and the count of ratings
         // Save the average skill ratings
         for (const string& skill : member->getSkills()) {
             outFile << skill << ":" << member->getAverageSkillRating(skill) << ";";
@@ -508,17 +528,24 @@ void System::loadData() {
         blockedUsernamesMap[newMember] = blockedMembersUsernames;
 
         string hostRatingStr, supporterRatingStr, skillRatingStr;
-        getline(ss, hostRatingStr, '|');
-        getline(ss, supporterRatingStr, '|');
-        getline(ss, skillRatingStr, '|');
-        if (!hostRatingStr.empty()) {
+        string hostRatingCountStr, supporterRatingCountStr;
+        getline(ss, hostRatingStr, ',');
+        getline(ss, hostRatingCountStr, '|');
+        if (!hostRatingStr.empty() && !hostRatingCountStr.empty()) {
             float hostRating = stof(hostRatingStr);
-            newMember->setAverageHostRating(hostRating);
+            int hostRatingCount = stoi(hostRatingCountStr);
+            newMember->setAverageHostRating(hostRating, hostRatingCount);
         }
-        if (!supporterRatingStr.empty()) {
+
+        getline(ss, supporterRatingStr, ',');
+        getline(ss, supporterRatingCountStr, '|');
+        if (!supporterRatingStr.empty() && !supporterRatingCountStr.empty()) {
             float supporterRating = stof(supporterRatingStr);
-            newMember->setAverageSupporterRating(supporterRating);
+            int supporterRatingCount = stoi(supporterRatingCountStr);
+            newMember->setAverageSupporterRating(supporterRating, supporterRatingCount);
         }
+
+        getline(ss, skillRatingStr, '|');
         if (!skillRatingStr.empty()) {
             stringstream ss_skillRating(skillRatingStr);
             string skillRating;
