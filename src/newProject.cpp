@@ -458,7 +458,7 @@ void System::saveData() {
         cout << "Error: Could not open file for writing.\n";
         return;
     }
-    outFile << "username|fullName|password|phoneNumber|email|homeAddress|city|creditPoints|skills|availability|pointsPerHour|minHostRating|blockedMembers|hostRating,hostRatingCount|supporterRating,supporterRatingCount|skill:skillRating,skillRatingCount|requests" << "\n";
+    outFile << "username|fullName|password|phoneNumber|email|homeAddress|city|creditPoints|skills|availability|pointsPerHour|minHostRating|blockedMembers|hostRating,hostRatingCount|supporterRating,supporterRatingCount|skill:skillRating,skillRatingCount|requests:requesterName,responderName,pointsPerHour,isAccepted" << "\n";
     for (Member* member : members) {
         outFile << member->getUsername() << "|"
                 << member->getFullName() << "|"
