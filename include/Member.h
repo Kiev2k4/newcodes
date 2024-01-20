@@ -9,6 +9,7 @@ using namespace std;
 
 // Forward declaration of System class
 class System;
+class Request;
 
 class Member {
 private:
@@ -34,6 +35,7 @@ private:
     float minHostRating;
     bool requestAccepted = false;
     string city;
+    vector<Request*> requests;  // Add this line
 public:
     // Constructor
     Member(string username = "", string fullName = "", string password = "", string phoneNumber = "", string email = "", string homeAddress = "", vector<string> skills = {}, vector<pair<string, pair<string, pair<string, string>>>> availability = {}, string city = "");
@@ -62,6 +64,8 @@ public:
     string getCity();
     vector<Member*>& getBlockedMembers();
 
+    vector<Request*>& getRequests();
+
     //Setter methods
     void setUsername(string newUsername);
     void setFullName(string newFullName);
@@ -77,6 +81,8 @@ public:
     void setCity(string newCity);
     void setAverageHostRating(float rating, int count);
     void setAverageSupporterRating(float rating, int count);
+
+    void setRequests(vector<Request*>& newRequests);
 
     void setAverageSkillRating(const string& skill, float averageRating, int count); 
 
@@ -107,8 +113,11 @@ public:
 
     //Booking and request method
     bool bookSupporter(Member* supporter);
-    void viewRequests(vector<Member*> requests);
-    bool respondToRequest(Member* request, bool accept);
+    void viewRequests();
+    void viewAcceptedRequests();
+    bool respondToRequest(Request* request, bool accept);
+
+    void addRequest(Request* request);
 
     //Blocking methods
     void blockMember(Member* member);

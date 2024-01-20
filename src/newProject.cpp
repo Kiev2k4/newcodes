@@ -12,6 +12,7 @@ using namespace std;
 #include "../include/NonMember.h"
 #include "../include/System.h"
 #include "../include/Admin.h"
+#include "../include/Request.h"
 
 const int REGISTRATION_FEE = 20;
 const int CREDIT_POINTS_PER_DOLLAR = 1;
@@ -23,6 +24,9 @@ vector<string> split(const string& s, char delimiter);  // Function declaration
 Member::Member(string username, string fullName, string password, string phoneNumber, string email, string homeAddress, vector<string> skills, vector<pair<string, pair<string, pair<string, string>>>> availability, string city)
     : username(username), fullName(fullName), password(password), phoneNumber(phoneNumber), email(email), homeAddress(homeAddress), skills(skills), availability(availability), city(city) {
 }
+
+Request::Request(Member* requester, Member* responder, int pointsPerHour)
+        : requester(requester), responder(responder), pointsPerHour(pointsPerHour), isAccepted(false) {}
 
 string Member::getUsername() { return username; }
 string Member::getFullName() { return fullName; }
@@ -36,6 +40,12 @@ int Member::getPointsPerHour() { return pointsPerHour; }
 float Member::getMinHostRating() { return minHostRating; }
 bool Member::getRequestAccepted() { return requestAccepted; }
 string Member::getCity(){ return city; }
+vector<Request*>& Member::getRequests() { return requests; }
+
+Member* Request::getRequester() { return requester; }
+Member* Request::getResponder() { return responder; }
+bool Request::getIsAccepted() { return isAccepted; }
+int Request::getPointsPerHour() { return pointsPerHour; }
 
 void Member::setUsername(string newUsername)
 {
@@ -83,6 +93,12 @@ void Member::setRequestAccepted(bool status) { requestAccepted = status; }
 
 void Member::setCity(string newCity) {
     city = newCity;
+}
+
+void Request::setIsAccepted(bool accept) { isAccepted = accept; }
+
+void Member::setRequests(vector<Request*>& newRequests){
+    requests = newRequests;
 }
 
 void NonMember::viewSupporters() {
@@ -335,35 +351,42 @@ bool Member::bookSupporter(Member* supporter) {
     if (supporter->isBlocked(this)) {
         return false;  // Current member is blocked by the supporter
     } else if (creditPoints >= supporter->getPointsPerHour() && this->getHostRating() >= supporter->getMinHostRating()) {
-        creditPoints -= supporter->getPointsPerHour();
+        Request* request = new Request(this, supporter, supporter->getPointsPerHour());
+        requests.push_back(request);
+        supporter->addRequest(request);  // Add the request to the supporter's list of requests
         return true;  // Booking successful
     } else {
         return false;  // Not enough points or host rating too low
     }
 }
 
-// Method to view all requests for their skills
-void Member::viewRequests(vector<Member*> requests) {
-    for (Member* request : requests) {
-        if (find(skills.begin(), skills.end(), request->getSkills()[0]) != skills.end()) {
-            cout << "Request from: " << request->getUsername() << "\n";
-            cout << "Host rating: " << request->getHostRating() << "\n";
-        }
+void Member::addRequest(Request* request) {
+    requests.push_back(request);
+}
+
+void Member::viewRequests() {
+    int index = 1;
+    for (Request* request : requests) {
+        cout << "Request " << index << ":\n";
+        cout << "Requester: " << request->getRequester()->getUsername() << "\n";
+        cout << "Host rating: " << request->getRequester()->getHostRating() << "\n";
+        index++;
     }
 }
 
-// Method to accept or reject a request
-bool Member::respondToRequest(Member* request, bool accept) {
-    if (requestAccepted) {
-        cout << "Cannot cancel because the request is already accepted.\n";
+bool Member::respondToRequest(Request* request, bool accept) {
+    if (request->getIsAccepted()) {
+        cout << "Cannot reject because the request is already accepted.\n";
         return false;
     } else {
         if (accept) {
-            // Add code here to handle accepting the request
-            requestAccepted = true;
+            creditPoints += request->getPointsPerHour();
+            request->getRequester()->creditPoints -= request->getPointsPerHour();
+            request->setIsAccepted(true);
             return true;
         } else {
-            // Add code here to handle rejecting the request
+            // Delete the request
+            requests.erase(remove(requests.begin(), requests.end(), request), requests.end());
             return false;
         }
     }
@@ -373,6 +396,18 @@ bool Member::respondToRequest(Member* request, bool accept) {
 void Member::blockMember(Member* member) {
     blockedMembers.push_back(member);
     System::saveData();
+}
+
+void Member::viewAcceptedRequests() {
+    int index = 1;
+    for (Request* request : requests) {
+        if (request->getIsAccepted()) {
+            cout << "Accepted request " << index << ":\n";
+            cout << "Requester: " << request->getRequester()->getUsername() << "\n";
+            cout << "Host rating: " << request->getRequester()->getHostRating() << "\n";
+            index++;
+        }
+    }
 }
 
 vector<Member*>& Member::getBlockedMembers(){ return blockedMembers; }
@@ -423,7 +458,7 @@ void System::saveData() {
         cout << "Error: Could not open file for writing.\n";
         return;
     }
-    outFile << "username|fullName|password|phoneNumber|email|homeAddress|city|creditPoints|skills|availability|pointsPerHour|minHostRating|blockedMembers|hostRating,hostRatingCount|supporterRating,supporterRatingCount|skill:skillRating,skillRatingCount" << "\n";
+    outFile << "username|fullName|password|phoneNumber|email|homeAddress|city|creditPoints|skills|availability|pointsPerHour|minHostRating|blockedMembers|hostRating,hostRatingCount|supporterRating,supporterRatingCount|skill:skillRating,skillRatingCount|requests" << "\n";
     for (Member* member : members) {
         outFile << member->getUsername() << "|"
                 << member->getFullName() << "|"
@@ -454,7 +489,15 @@ void System::saveData() {
         for (const string& skill : member->getSkills()) {
             outFile << skill << ":" << member->getAverageSkillRating(skill) << "," << member->getSkillRatingCount(skill) << ";";
         }
-        outFile << "\n";  // End of member data
+        outFile << "|";
+        //Save the requests
+        for (Request* request : member->getRequests()) {
+            outFile << request->getRequester()->getUsername() << ","
+                    << request->getResponder()->getUsername() << ","
+                    << request->getPointsPerHour() << ","
+                    << request->getIsAccepted() << ";";
+        }
+        outFile << "\n";
     }
     outFile.close();
 }
@@ -568,6 +611,29 @@ void System::loadData() {
                 }
             }
         }
+
+        // Load the requests
+        string requestsStr;
+        getline(ss, requestsStr, '|');
+        vector<Request*> requestsVector;
+        stringstream ss_requests(requestsStr);
+        string requestStr;
+        while (getline(ss_requests, requestStr, ';')) {
+            stringstream ss_request(requestStr);
+            string requesterUsername, responderUsername, pointsPerHourStr, isAcceptedStr;
+            getline(ss_request, requesterUsername, ',');
+            getline(ss_request, responderUsername, ',');
+            getline(ss_request, pointsPerHourStr, ',');
+            getline(ss_request, isAcceptedStr, ',');
+            Member* requester = findMemberByUsername(requesterUsername);
+            Member* responder = findMemberByUsername(responderUsername);
+            int pointsPerHour = stoi(pointsPerHourStr);
+            bool isAccepted = isAcceptedStr == "1";
+            Request* request = new Request(requester, responder, pointsPerHour);
+            request->setIsAccepted(isAccepted);
+            requestsVector.push_back(request);
+        }
+        newMember->setRequests(requestsVector);
     }
 
     // Second pass: Set up the blocked relationships
@@ -767,12 +833,13 @@ int main() {
                         cout << "9. Rate a Supporter\n";
                         cout << "10. Rate a Host\n";
                         cout << "11. Top up Credit Points\n";
+                        cout << "12. View accepted requests\n";
                         cout << "Enter your choice: ";
                         cin >> memberChoice;
-                        while(cin.fail() || memberChoice < 0 || memberChoice > 11) {
+                        while(cin.fail() || memberChoice < 0 || memberChoice > 12) {
                             cin.clear(); // clear input buffer to restore cin to a usable state
                             cin.ignore(INT_MAX, '\n'); // ignore last input
-                            cout << "You can only enter numbers 0 - 10. Please enter a valid choice: ";
+                            cout << "You can only enter numbers 0 - 12. Please enter a valid choice: ";
                             cin >> memberChoice;
                         }
                         switch (memberChoice) {
@@ -871,9 +938,9 @@ int main() {
                                 Member* supporter = system.findMemberByUsername(supporterUsername);
                                 if (supporter) {
                                     if (member->bookSupporter(supporter)) {
-                                        cout << "You have successfully booked " << supporterUsername << ".\n";
+                                        cout << "You have successfully sent a request to " << supporterUsername << ".\n";
                                     } else {
-                                        cout << "You cannot book this supporter. Either you are blocked by them, or you do not have enough credit points, or your host rating is too low.\n";
+                                        cout << "You cannot send a request to this supporter. Either you are blocked by them, or you do not have enough credit points, or your host rating is too low.\n";
                                     }
                                 } else {
                                     cout << "No supporter found with the username " << supporterUsername << ".\n";
@@ -881,11 +948,44 @@ int main() {
                                 break;
                             }
                             case 6:  // View Requests
-                                // Add your code here...
+                            {
+                                member->viewRequests();
                                 break;
+                            }
                             case 7:  // Respond to a Request
-                                // Add your code here...
+                            {
+                                int requestIndex;
+                                while (true) {
+                                    cout << "Enter the index of the request you want to respond to: ";
+                                    cin >> requestIndex;
+                                    cin.ignore();  // Ignore the newline left in the buffer by the previous input operation
+                                    if (requestIndex > 0 && requestIndex <= member->getRequests().size()) {
+                                        Request* request = member->getRequests()[requestIndex-1];
+                                        char accept;
+                                        while (true) {
+                                            cout << "Do you want to accept the request? (y/n): ";
+                                            cin >> accept;
+                                            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Clear the buffer
+                                            if (cin.fail() || (accept != 'y' && accept != 'n')) {
+                                                cin.clear(); // Clear the error flags
+                                                cout << "Invalid input. Please enter 'y' for yes or 'n' for no.\n";
+                                            } else {
+                                                break; // Exit the loop if the input is valid
+                                            }
+                                        }
+                                        bool success = member->respondToRequest(request, accept == 'y');
+                                        if (success) {
+                                            cout << "Request successfully responded to.\n";
+                                        } else {
+                                            cout << "Could not respond to request.\n";
+                                        }
+                                        break; // Exit the loop if the request is found and responded to
+                                    } else {
+                                        cout << "Invalid index. Please try again.\n";
+                                    }
+                                }
                                 break;
+                            }
                             case 8:  // Block a Member
                             {
                                 string usernameToBlock;
@@ -1003,6 +1103,11 @@ int main() {
                                 cin.ignore();
                                 getline(cin, inputPassword);
                                 member->topUpPoints(cash, inputPassword);
+                                break;
+                            }
+                            case 12:  // View Accepted Requests
+                            {
+                                member->viewAcceptedRequests();
                                 break;
                             }
                         }
