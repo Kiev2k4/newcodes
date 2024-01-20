@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <limits>
 #include <regex>
+#include <numeric>
 using namespace std;
 
 #include "../include/Member.h"
@@ -106,6 +107,14 @@ void NonMember::viewSupporters() {
             cout << "> Points per hour: " << member->getPointsPerHour() << "\n";
             cout << "> Minimum host rating: " << member->getMinHostRating() << "\n";
             cout << "> City: " << member->getCity() << "\n\n";
+            cout << "> Host Rating: " << member->getHostRating() << "\n";
+            cout << "> Supporter Rating: " << member->getSupporterRating() << "\n";
+            // Display the average skill ratings
+            cout << "> Skill Ratings: ";
+            for (const string& skill : member->getSkills()) {
+                cout << skill << " (average rating: " << member->getAverageSkillRating(skill) << "), ";
+            }
+            cout << "\n";
         }
     }
 }
@@ -188,6 +197,15 @@ void Member::viewInformation() {
     cout << "> Points per hour: " << pointsPerHour << "\n";
     cout << "> Minimum host rating: " << minHostRating << "\n";
     cout << "> City: " << city << "\n";
+    cout << "> Host Rating: " << this->getHostRating() << "\n";
+    cout << "> Supporter Rating: " << this->getSupporterRating() << "\n";
+    
+    // Display the average skill ratings
+    cout << "> Skill Ratings: ";
+    for (const string& skill : skills) {
+        cout << skill << " (average rating: " << getAverageSkillRating(skill) << "), ";
+    }
+    cout << "\n";
 }
 
 // Getter and setter for credit points
@@ -220,23 +238,56 @@ void Member::topUpPoints(int cash, string inputPassword) {
 }
 
 // Getter and setter for ratings
-float Member::getSkillRating() { return skillRating; }
-void Member::setSkillRating(float rating) { skillRating = rating; }
+float Member::getAverageSkillRating(const string& skill) {
+    if (skillRatings.count(skill) > 0) {
+        return skillRatings[skill].first / skillRatings[skill].second;
+    } else {
+        return 0.0;  // Default value
+    }
+}
+void Member::addSkillRating(const string& skill, float rating) {
+    if (skillRatings.count(skill) > 0) {
+        skillRatings[skill].first += rating;
+        skillRatings[skill].second++;
+    } else {
+        skillRatings[skill] = make_pair(rating, 1);
+    }
+}
+void Member::setAverageSkillRating(const string& skill, float averageRating) {
+    if (skillRatings.count(skill) > 0) {
+        skillRatings[skill].first = averageRating * skillRatings[skill].second;
+    } else {
+        skillRatings[skill] = make_pair(averageRating, 1);
+    }
+}
 
-float Member::getSupporterRating() { return supporterRating; }
-void Member::setSupporterRating(float rating) { supporterRating = rating; }
+float Member::getSupporterRating() { return getAverage(supporterRatings); }
+void Member::addSupporterRating(float rating) { supporterRatings.push_back(rating); }
+void Member::setAverageSupporterRating(float rating){ this->averageSupporterRating = rating; }
 
-float Member::getHostRating() { return hostRating; }
-void Member::setHostRating(float rating) { hostRating = rating; }
+float Member::getHostRating() { return getAverage(hostRatings); }
+void Member::addHostRating(float rating) { hostRatings.push_back(rating); }
+void Member::setAverageHostRating(float rating){ this->averageHostRating = rating; }
 
 // Method for a member (as a host) to rate their supporter
 void Member::rateSupporter(Member* supporter, float rating) {
-    supporter->setSkillRating(rating);
+    supporter->addSupporterRating(rating);
+}
+
+//Method for a member (as a host) to rate the skills of their supporters
+void Member::rateSkill(Member* supporter, const string& skill, float rating){
+    supporter->addSkillRating(skill, rating);
 }
 
 // Method for a member (as a supporter) to rate their host
 void Member::rateHost(Member* host, float rating) {
-    host->setHostRating(rating);
+    host->addHostRating(rating);
+}
+
+float Member::getAverage(std::vector<float>& ratings) {
+    if (ratings.empty()) return 0.0;
+    float sum = std::accumulate(ratings.begin(), ratings.end(), 0.0);
+    return sum / ratings.size();
 }
 
 // Method to list availability
@@ -257,7 +308,7 @@ void Member::unlistAvailability() {
 bool Member::bookSupporter(Member* supporter) {
     if (supporter->isBlocked(this)) {
         return false;  // Current member is blocked by the supporter
-    } else if (creditPoints >= supporter->getPointsPerHour() && hostRating >= supporter->getMinHostRating()) {
+    } else if (creditPoints >= supporter->getPointsPerHour() && this->getHostRating() >= supporter->getMinHostRating()) {
         creditPoints -= supporter->getPointsPerHour();
         return true;  // Booking successful
     } else {
@@ -295,6 +346,7 @@ bool Member::respondToRequest(Member* request, bool accept) {
 // Method to block a member
 void Member::blockMember(Member* member) {
     blockedMembers.push_back(member);
+    System::saveData();
 }
 
 vector<Member*>& Member::getBlockedMembers(){ return blockedMembers; }
@@ -345,7 +397,7 @@ void System::saveData() {
         cout << "Error: Could not open file for writing.\n";
         return;
     }
-    outFile << "name|username|password|phoneNumber|email|homeAddress|city|creditPoints|skills|availability|pointsPerHour|minHostRating|blockedMembers" << "\n";
+    outFile << "name|username|password|phoneNumber|email|homeAddress|city|creditPoints|skills|availability|pointsPerHour|minHostRating|blockedMembers|hostRating|supporterRating|skillRating" << "\n";
     for (Member* member : members) {
         outFile << member->getUsername() << "|"
                 << member->getFullName() << "|"
@@ -369,7 +421,14 @@ void System::saveData() {
         for (Member* blockedMember : member->getBlockedMembers()) {
             outFile << blockedMember->getUsername() << ",";
         }
-        outFile << "\n"; 
+        outFile << "|";
+        outFile << member->getHostRating() << "|";  // Save the host rating
+        outFile << member->getSupporterRating() << "|";  // Save the supporter rating
+        // Save the average skill ratings
+        for (const string& skill : member->getSkills()) {
+            outFile << skill << ":" << member->getAverageSkillRating(skill) << ";";
+        }
+        outFile << "\n";  // End of member data
     }
     outFile.close();
 }
@@ -445,6 +504,40 @@ void System::loadData() {
         getline(ss, blockedMembersStr, '|');
         vector<string> blockedMembersUsernames = split(blockedMembersStr, ',');
         blockedUsernamesMap[newMember] = blockedMembersUsernames;
+
+        string hostRatingStr, supporterRatingStr, skillRatingStr;
+        getline(ss, hostRatingStr, '|');
+        getline(ss, supporterRatingStr, '|');
+        getline(ss, skillRatingStr, '|');
+        try {
+            if (!hostRatingStr.empty()) {
+                float hostRating = stof(hostRatingStr);
+                newMember->setAverageHostRating(hostRating);
+            }
+            if (!supporterRatingStr.empty()) {
+                float supporterRating = stof(supporterRatingStr);
+                newMember->setAverageSupporterRating(supporterRating);
+            }
+            if (!skillRatingStr.empty()) {
+                stringstream ss_skillRating(skillRatingStr);
+                string skillRating;
+                while (getline(ss_skillRating, skillRating, ';')) {
+                    stringstream ss_skill(skillRating);
+                    string skill;
+                    getline(ss_skill, skill, ':');
+                    string averageRatingStr;
+                    getline(ss_skill, averageRatingStr, ':');
+                    float averageRating = stof(averageRatingStr);
+                    newMember->setAverageSkillRating(skill, averageRating);
+                }
+            }
+        } catch (const std::invalid_argument& ia) {
+            std::cerr << "Invalid argument: Unable to convert string to float. " << ia.what() << '\n';
+            // handle error as appropriate for your application
+        } catch (const std::out_of_range& oor) {
+            std::cerr << "Out of Range error: Unable to convert string to float. " << oor.what() << '\n';
+            // handle error as appropriate for your application
+        }
     }
 
     // Second pass: Set up the blocked relationships
@@ -708,14 +801,14 @@ int main() {
 
                                 member->listAvailability(newAvailability, newPointsPerHour, newMinHostRating);
                                 cout << "Availability listed successfully!\n";
-                                System::saveData();
+                                system.saveData();
                                 break;
                             }
                             case 3:  // Unlist Availability
                             {
                                 member->unlistAvailability();
                                 cout << "Availability unlisted successfully!\n";
-                                System::saveData();  // Remember to save the data after making changes
+                                system.saveData();  // Remember to save the data after making changes
                                 break;
                             }
                             case 4:  // Search Supporters
@@ -780,11 +873,89 @@ int main() {
                                 break;
                             }
                             case 9:  // Rate a Supporter
-                                // Add your code here...
+                            {
+                                Member* supporterToRate = nullptr;
+                                int supporterRating, skillRating;
+                                string supporterUsername;
+                                while (supporterToRate == nullptr) {
+                                    cout << "Enter the name of the supporter you want to rate: ";
+                                    cin.ignore();
+                                    getline(cin, supporterUsername);
+                                    supporterToRate = system.findMemberByUsername(supporterUsername);
+                                    if (supporterToRate == nullptr) {
+                                        cout << "No member found with the username " << supporterUsername << ". Please try again.\n";
+                                    }
+                                }
+                                while (true) {
+                                    cout << "Enter a rating for the supporter (1-5): ";
+                                    cin >> supporterRating;
+                                    if (cin.fail()) {
+                                        cin.clear();  // clear the error state of the cin object
+                                        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // ignore the rest of the line
+                                        cout << "Invalid input. Please enter a number between 1 and 5.\n";
+                                    } else if (supporterRating < 1 || supporterRating > 5) {
+                                        cout << "Invalid supporter rating. Please enter a number between 1 and 5.\n";
+                                    } else {
+                                        break;  // exit the loop if the input is valid
+                                    }
+                                }
+                                member->rateSupporter(supporterToRate, supporterRating);
+                                cout << "New supporter rating from " << member->getUsername() << " to " << supporterToRate->getUsername() << " is " << supporterRating << ", which makes " << supporterToRate->getUsername() << " average supporter rating become " << supporterToRate->getSupporterRating() << "\n";
+
+                                //Must be fixed
+                                for (const string& skill : supporterToRate->getSkills()){
+                                    while (true) {
+                                        cout << "Enter a skill rating for the supporter for " << skill << " (1-5): ";
+                                        cin >> skillRating;
+                                        if (cin.fail()) {
+                                            cin.clear();  // clear the error state of the cin object
+                                            cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // ignore the rest of the line
+                                            cout << "Invalid input. Please enter a number between 1 and 5.\n";
+                                        } else if (skillRating < 1 || skillRating > 5) {
+                                            cout << "Invalid rating. Please enter a number between 1 and 5.\n";
+                                        } else {
+                                            break;  // exit the loop if the input is valid
+                                        }
+                                    }
+                                    member->rateSkill(supporterToRate, skill, skillRating);
+                                    cout << "New rating of " << skill << " from " << member->getUsername() << " to " << supporterToRate->getUsername() << " is " << skillRating << ", which makes " << supporterToRate->getUsername() << " average " << skill << " rating become " << supporterToRate->getAverageSkillRating(skill) << "\n";
+                                }
+                                system.saveData();
                                 break;
+                            }
                             case 10:  // Rate a Host
-                                // Add your code here...
+                            {
+                                Member* hostToRate = nullptr;
+                                int hostRating;
+                                string hostUsername;
+                                while (hostToRate == nullptr) {
+                                    cout << "Enter the name of the host you want to rate: ";
+                                    cin.ignore();
+                                    getline(cin, hostUsername);
+                                    hostToRate = system.findMemberByUsername(hostUsername);
+                                    if (hostToRate == nullptr) {
+                                        cout << "No member found with the username " << hostUsername << ". Please try again.\n";
+                                        continue;
+                                    }
+                                }
+                                while (true) {
+                                    cout << "Enter a rating for the host (1-5): ";
+                                    cin >> hostRating;
+                                    if (cin.fail()) {
+                                        cin.clear();  // clear the error state of the cin object
+                                        cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');  // ignore the rest of the line
+                                        cout << "Invalid input. Please enter a number between 1 and 5.\n";
+                                    } else if (hostRating < 1 || hostRating > 5) {
+                                        cout << "Invalid rating. Please enter a number between 1 and 5.\n";
+                                    } else {
+                                        break;  // exit the loop if the input is valid
+                                    }
+                                }
+                                member->rateHost(hostToRate, hostRating);
+                                cout << "New host rating from " << member->getUsername() << " to " << hostToRate->getUsername() << " is " << hostRating << ", which makes " << hostToRate->getUsername() << " average host rating become " << hostToRate->getHostRating() << "\n";
+                                system.saveData();
                                 break;
+                            }
                             case 11:  // Top up Credit Points
                             {
                                 int cash;

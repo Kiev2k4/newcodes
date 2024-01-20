@@ -20,11 +20,14 @@ private:
     string homeAddress;
     vector<string> skills;
     int creditPoints = 20;
-    float skillRating;
-    float supporterRating;
-    float hostRating;
+    vector<float> supporterRatings;
+    vector<float> hostRatings;
+    float averageHostRating;
+    float averageSupporterRating;
+    float averageSkillRating;
     vector<pair<string, pair<string, pair<string, string>>>> availability;
     vector<Member*> blockedMembers;
+    map<string, pair<float,int>> skillRatings;
     int pointsPerHour;
     float minHostRating;
     bool requestAccepted = false;
@@ -40,9 +43,11 @@ public:
     string getPhoneNumber();
     string getEmail();
     string getHomeAddress();
-    float getSkillRating();
+
+    float getAverageSkillRating(const string& skill);
     float getSupporterRating();
     float getHostRating();
+
     vector<string> getSkills();
     vector<pair<string, pair<string, pair<string, string>>>> getAvailability();
     int getPointsPerHour();
@@ -58,15 +63,20 @@ public:
     void setPhoneNumber(string newPhoneNumber);
     void setEmail(string newEmail);
     void setHomeAddress(string newHomeAddress);
-    void setSkillRating(float rating);
-    void setSupporterRating(float rating);
-    void setHostRating(float rating);
     void setSkills(vector<string> newSkills);
     void setAvailability(vector<pair<string, pair<string, pair<string, string>>>> newAvailability);
     void setPointsPerHour(int points);
     void setMinHostRating(float rating);
     void setRequestAccepted(bool status);
     void setCity(string newCity);
+    void setAverageHostRating(float rating);
+    void setAverageSupporterRating(float rating);
+
+    void setAverageSkillRating(const string& skill, float averageRating); 
+
+    void addSkillRating(const string& skill, float rating);
+    void addSupporterRating(float rating);
+    void addHostRating(float rating);
 
     bool login(string inputUsername, string inputPassword);
 
@@ -82,6 +92,8 @@ public:
     //Rating method
     void rateSupporter(Member* supporter, float rating);
     void rateHost(Member* host, float rating);
+    void rateSkill(Member* supporter, const string& skill, float rating);
+    float getAverage(vector<float>& ratings);
 
     //Availability method
     void listAvailability(vector<pair<string, pair<string, pair<string, string>>>> newAvailability, int newPointsPerHour, float newMinHostRating);
