@@ -255,12 +255,16 @@ void Member::addSkillRating(const string& skill, float rating) {
         skillRatings[skill] = make_pair(rating, 1);
     }
 }
-void Member::setAverageSkillRating(const string& skill, float averageRating) {
+void Member::setAverageSkillRating(const string& skill, float averageRating, int count) {
     if (skillRatings.count(skill) > 0) {
-        skillRatings[skill].first = averageRating * skillRatings[skill].second;
+        skillRatings[skill].first = averageRating * count;
+        skillRatings[skill].second = count;
     } else {
-        skillRatings[skill] = make_pair(averageRating, 1);
+        skillRatings[skill] = make_pair(0.0, 0);
     }
+}
+int Member::getSkillRatingCount(const string& skill) {
+    return skillRatings[skill].second;
 }
 
 float Member::getSupporterRating() { return this->averageSupporterRating; }
@@ -448,7 +452,7 @@ void System::saveData() {
         outFile << member->getSupporterRating() << "," << member->getSupporterRatingCount() << "|";  // Save the average supporter rating and the count of ratings
         // Save the average skill ratings
         for (const string& skill : member->getSkills()) {
-            outFile << skill << ":" << member->getAverageSkillRating(skill) << ";";
+            outFile << skill << ":" << member->getAverageSkillRating(skill) << "," << member->getSkillRatingCount(skill) << ";";
         }
         outFile << "\n";  // End of member data
     }
@@ -529,6 +533,7 @@ void System::loadData() {
 
         string hostRatingStr, supporterRatingStr, skillRatingStr;
         string hostRatingCountStr, supporterRatingCountStr;
+
         getline(ss, hostRatingStr, ',');
         getline(ss, hostRatingCountStr, '|');
         if (!hostRatingStr.empty() && !hostRatingCountStr.empty()) {
@@ -553,15 +558,16 @@ void System::loadData() {
                 stringstream ss_skill(skillRating);
                 string skill;
                 getline(ss_skill, skill, ':');
-                string averageRatingStr;
-                getline(ss_skill, averageRatingStr, ':');
-                if (!averageRatingStr.empty()) {
+                string averageRatingStr, ratingCountStr;
+                getline(ss_skill, averageRatingStr, ',');
+                getline(ss_skill, ratingCountStr, ':');
+                if (!averageRatingStr.empty() && !ratingCountStr.empty()) {
                     float averageRating = stof(averageRatingStr);
-                    newMember->setAverageSkillRating(skill, averageRating);
+                    int ratingCount = stoi(ratingCountStr);
+                    newMember->setAverageSkillRating(skill, averageRating, ratingCount);
                 }
             }
         }
-
     }
 
     // Second pass: Set up the blocked relationships

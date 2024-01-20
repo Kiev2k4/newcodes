@@ -52,6 +52,7 @@ public:
 
     int getHostRatingCount();
     int getSupporterRatingCount();
+    int getSkillRatingCount(const string& skill);
 
     vector<string> getSkills();
     vector<pair<string, pair<string, pair<string, string>>>> getAvailability();
@@ -77,7 +78,7 @@ public:
     void setAverageHostRating(float rating, int count);
     void setAverageSupporterRating(float rating, int count);
 
-    void setAverageSkillRating(const string& skill, float averageRating); 
+    void setAverageSkillRating(const string& skill, float averageRating, int count); 
 
     void addSkillRating(const string& skill, float rating);
     void addSupporterRating(float rating);
