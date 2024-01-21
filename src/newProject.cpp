@@ -925,6 +925,7 @@ int main() {
                                 for (Member* supporter : suitableSupporters)
                                 {
                                     supporter->viewInformation();
+                                    cout << "\n";
                                 }
                                 break;
                             }
