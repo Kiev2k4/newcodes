@@ -1022,7 +1022,6 @@ int main() {
                                 string supporterUsername;
                                 while (supporterToRate == nullptr) {
                                     cout << "Enter the name of the supporter you want to rate: ";
-                                    cin.ignore();
                                     getline(cin, supporterUsername);
                                     supporterToRate = system.findMemberByUsername(supporterUsername);
                                     if (supporterToRate == nullptr) {
