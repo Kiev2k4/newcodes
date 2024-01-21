@@ -945,6 +945,7 @@ int main() {
                                 } else {
                                     cout << "No supporter found with the username " << supporterUsername << ".\n";
                                 }
+                                system.saveData();
                                 break;
                             }
                             case 6:  // View Requests
@@ -984,6 +985,7 @@ int main() {
                                         cout << "Invalid index. Please try again.\n";
                                     }
                                 }
+                                system.saveData();
                                 break;
                             }
                             case 8:  // Block a Member
