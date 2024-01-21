@@ -890,7 +890,14 @@ int main() {
                                 string minHostRatingStr;
                                 getline(cin, minHostRatingStr);
                                 if (!minHostRatingStr.empty()) {
-                                    newMinHostRating = stof(minHostRatingStr);
+                                    newMinHostRating = stoi(minHostRatingStr);
+                                    if (newMinHostRating >= 1 && newMinHostRating <= 5) {
+                                        break;
+                                    } else {
+                                        cout << "Invalid input. Please enter a number between 1 and 5." << endl;
+                                    }
+                                } else {
+                                    break;
                                 }
 
                                 cout << "Enter points required per hour: ";
