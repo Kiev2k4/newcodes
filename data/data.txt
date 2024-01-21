@@ -2,4 +2,4 @@ username|fullName|password|phoneNumber|email|homeAddress|city|creditPoints|skill
 thinh123|thinh nguyen|123|091743938|thinh@gmail.com|123 Nguyen Van Luong|Sai Gon|20|cleaning, cooking,||0|0||0,0|0,0|cleaning:nan,0; cooking:nan,0;|
 dao|tran hung dao|12|0947982|dao@gmail.com|123 Tran Quoc Tuan|Sai Gon|20|cleaning, cooking,|Monday,cleaning,17:00,19:00;Wednesday,cooking,10:00,12:00;|5|6||0,0|0,0|cleaning:nan,0; cooking:nan,0;|
 hau|hau nguyen|123|019327|hau@gmail.com|123 quang trung|Sai Gon|30|English tutoring, cleaning,|Monday,cleaning,15:00,17:00;Wednesday,English tutoring,10:00,12:00;|10|6|dao,|0,0|0,0|English tutoring:nan,0; cleaning:nan,0;|
-nguyen123|Thai Le Nguyen|123|01427923|nguyen@gmail.com|97 Duong Quang Ham|Ha Noi|20|cleaning, cooking,||0|0||0,1277193825|0,1735290741|cleaning:0,0; cooking:0,0;|
+nguyen123|Thai Le Nguyen|123|09134683827|nguyen@gmail.com|97 Duong Quang Ham|Ha Noi|20|cleaning, cooking,||0|0||0,0|0,0|cleaning:0,0; cooking:0,0;|

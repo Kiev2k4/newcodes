@@ -29,8 +29,8 @@ private:
     vector<pair<string, pair<string, pair<string, string>>>> availability;
     vector<Member*> blockedMembers;
     map<string, pair<float,int>> skillRatings;
-    int hostRatingCount;
-    int supporterRatingCount;
+    int hostRatingCount = 0;
+    int supporterRatingCount = 0;
     int pointsPerHour = 0;
     float minHostRating = 0;
     bool requestAccepted = false;
