@@ -1073,7 +1073,6 @@ int main() {
                                 string hostUsername;
                                 while (hostToRate == nullptr) {
                                     cout << "Enter the name of the host you want to rate: ";
-                                    cin.ignore();
                                     getline(cin, hostUsername);
                                     hostToRate = system.findMemberByUsername(hostUsername);
                                     if (hostToRate == nullptr) {
