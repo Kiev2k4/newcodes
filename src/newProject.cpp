@@ -105,7 +105,7 @@ void NonMember::viewSupporters() {
     for (Member* member : System::getMembers()) {
         if (1) {
             // Print member details but not their reviews, credit points, or ratings
-            cout << "> Username: " << member->getUsername() << "\n";
+            cout << "\n> Username: " << member->getUsername() << "\n";
             cout << "> Full name: " << member->getFullName() << "\n";
             cout << "> Phone number: " << member->getPhoneNumber() << "\n";
             cout << "> Email: " << member->getEmail() << "\n";
@@ -120,16 +120,17 @@ void NonMember::viewSupporters() {
                 cout << slot.first << " - " << slot.second.first << " from " << slot.second.second.first << " to " << slot.second.second.second << ", ";
             }
             cout << "\n";
-            cout << "> Points per hour: " << member->getPointsPerHour() << "\n";
-            cout << "> Minimum host rating: " << member->getMinHostRating() << "\n";
-            cout << "> City: " << member->getCity() << "\n\n";
-            cout << "> Host Rating: " << member->getHostRating() << "\n";
-            cout << "> Supporter Rating: " << member->getSupporterRating() << "\n";
+            cout << "> Points per hour: " << (member->getPointsPerHour() != 0 ? to_string(member->getPointsPerHour()) : "(N/A)") << "\n";
+            cout << "> Minimum host rating: " << (member->getMinHostRating() != 0 ? to_string(member->getMinHostRating()) : "(N/A)") << "\n";
+            cout << "> City: " << member->getCity() << "\n";
+            cout << "> Host Rating: " << (member->getHostRating() != 0 ? to_string(member->getHostRating()) : "(N/A)") << "\n";
+            cout << "> Supporter Rating: " << (member->getSupporterRating() != 0 ? to_string(member->getSupporterRating()) : "(N/A)") << "\n";
+
             // Display the average skill ratings
             cout << "> Skill Ratings: ";
             for (const string& skill : member->getSkills()) {
                 float avgRating = member->getAverageSkillRating(skill);
-                cout << skill << " (average rating: " << (avgRating != 0.0 ? to_string(avgRating) : "not available") << "), ";
+                cout << skill << " (average rating: " << (avgRating != 0.0 ? to_string(avgRating) : "(N/A)") << "), ";
             }
             cout << "\n";
         }
@@ -194,7 +195,7 @@ bool Member::login(string inputUsername, string inputPassword) {
 }
 
 void Member::viewInformation() {
-    cout << "> Username: " << username << "\n";
+    cout << "\n> Username: " << username << "\n";
     cout << "> Full Name: " << fullName << "\n";
     cout << "> Phone Number: " << phoneNumber << "\n";
     cout << "> Email: " << email << "\n";
@@ -211,17 +212,17 @@ void Member::viewInformation() {
         cout << slot.first << " - " << slot.second.first << " from " << slot.second.second.first << " to " << slot.second.second.second << ", ";
     }
     cout << "\n";
-    cout << "> Points per hour: " << pointsPerHour << "\n";
-    cout << "> Minimum host rating: " << minHostRating << "\n";
+    cout << "> Points per hour: " << (pointsPerHour != 0 ? to_string(pointsPerHour) : "(N/A)") << "\n";
+    cout << "> Minimum host rating: " << (minHostRating != 0 ? to_string(minHostRating) : "(N/A)") << "\n";
     cout << "> City: " << city << "\n";
-    cout << "> Host Rating: " << this->getHostRating() << "\n";
-    cout << "> Supporter Rating: " << this->getSupporterRating() << "\n";
-    
+    cout << "> Host Rating: " << (this->getHostRating() != 0 ? to_string(this->getHostRating()) : "(N/A)") << "\n";
+    cout << "> Supporter Rating: " << (this->getSupporterRating() != 0 ? to_string(this->getSupporterRating()) : "(N/A)") << "\n";
+
     // Display the average skill ratings
     cout << "> Skill Ratings: ";
     for (const string& skill : skills) {
         float avgRating = getAverageSkillRating(skill);
-        cout << skill << " (average rating: " << (avgRating != 0.0 ? to_string(avgRating) : "not available") << "), ";
+        cout << skill << " (average rating: " << (avgRating != 0.0 ? to_string(avgRating) : "(N/A)") << "), ";
     }
     cout << "\n";
 }
@@ -478,23 +479,25 @@ void System::saveData() {
         }
         outFile << "|";
         outFile << member->getPointsPerHour() << "|";
-        outFile << member->getMinHostRating() << "|";
+        outFile << (member->getMinHostRating() ? member->getMinHostRating() : 0) << "|";
         for (Member* blockedMember : member->getBlockedMembers()) {
             outFile << blockedMember->getUsername() << ",";
         }
         outFile << "|";
-        outFile << member->getHostRating() << "," << member->getHostRatingCount() << "|";  // Save the average host rating and the count of ratings
-        outFile << member->getSupporterRating() << "," << member->getSupporterRatingCount() << "|";  // Save the average supporter rating and the count of ratings
-        // Save the average skill ratings
+        outFile << (member->getHostRating() ? member->getHostRating() : 0) << "," 
+                << (member->getHostRatingCount() ? member->getHostRatingCount() : 0) << "|";  
+        outFile << (member->getSupporterRating() ? member->getSupporterRating() : 0) << "," 
+                << (member->getSupporterRatingCount() ? member->getSupporterRatingCount() : 0) << "|";  
         for (const string& skill : member->getSkills()) {
-            outFile << skill << ":" << member->getAverageSkillRating(skill) << "," << member->getSkillRatingCount(skill) << ";";
+            outFile << skill << ":" 
+                    << (member->getAverageSkillRating(skill) ? member->getAverageSkillRating(skill) : 0) << "," 
+                    << (member->getSkillRatingCount(skill) ? member->getSkillRatingCount(skill) : 0) << ";";
         }
         outFile << "|";
-        //Save the requests
         for (Request* request : member->getRequests()) {
             outFile << request->getRequester()->getUsername() << ","
                     << request->getResponder()->getUsername() << ","
-                    << request->getPointsPerHour() << ","
+                    << (request->getPointsPerHour() ? request->getPointsPerHour() : 0) << ","
                     << request->getIsAccepted() << ";";
         }
         outFile << "\n";

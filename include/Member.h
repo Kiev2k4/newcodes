@@ -23,16 +23,16 @@ private:
     int creditPoints = 20;
     vector<float> supporterRatings;
     vector<float> hostRatings;
-    float averageHostRating;
-    float averageSupporterRating;
-    float averageSkillRating;
+    float averageHostRating = 0;
+    float averageSupporterRating = 0;
+    float averageSkillRating = 0;
     vector<pair<string, pair<string, pair<string, string>>>> availability;
     vector<Member*> blockedMembers;
     map<string, pair<float,int>> skillRatings;
     int hostRatingCount;
     int supporterRatingCount;
-    int pointsPerHour;
-    float minHostRating;
+    int pointsPerHour = 0;
+    float minHostRating = 0;
     bool requestAccepted = false;
     string city;
     vector<Request*> requests;  // Add this line
